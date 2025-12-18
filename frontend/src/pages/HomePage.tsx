@@ -8,14 +8,70 @@ import { TerminalBlock } from "@/components/TerminalBlock";
 import { ProjectCard } from "@/components/ProjectCard";
 import { BlogCard } from "@/components/BlogCard";
 import { RepoCard } from "@/components/RepoCard";
-import { posts } from "@/data/posts";
-import { getFeaturedProjects } from "@/data/projects";
-import { getTopRepos } from "@/data/repos";
+import { loadPosts, type Post } from "@/data/posts";
+import { fetchProjectsPublic, getFeaturedProjects, type Project } from "@/data/projects";
+import { getTopRepos, type Repo } from "@/data/repos";
+import { useEffect, useState } from "react";
+import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
 
 export default function HomePage() {
-  const featuredProjects = getFeaturedProjects().slice(0, 3);
+  const [settings, setSettings] = useState(defaultSiteSettings);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [postsError, setPostsError] = useState<string | null>(null);
+  const [repos, setRepos] = useState<Repo[]>([]);
+  const [reposLoading, setReposLoading] = useState(true);
+  const [reposError, setReposError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchSiteSettings(true)
+      .then((data) => setSettings({ ...defaultSiteSettings, ...data }))
+      .catch(() => setSettings(defaultSiteSettings))
+      .finally(() => setSettingsLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    fetchProjectsPublic()
+      .then((data) => {
+        setProjects(data);
+        setProjectsError(null);
+      })
+      .catch((err: Error) => setProjectsError(err?.message || "Failed to load projects"))
+      .finally(() => setProjectsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadPosts()
+      .then((data) => {
+        setPosts(data);
+        setPostsError(null);
+      })
+      .catch((err: Error) => setPostsError(err?.message || "Failed to load posts"))
+      .finally(() => setPostsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    getTopRepos(4)
+      .then((data) => {
+        setRepos(data);
+        setReposError(null);
+      })
+      .catch((err: Error) => setReposError(err?.message || "Failed to load repositories"))
+      .finally(() => setReposLoading(false));
+  }, []);
+
+  const featuredProjects = getFeaturedProjects(projects).slice(0, 3);
   const latestPosts = posts.slice(0, 3);
-  const topRepos = getTopRepos(4);
+  const projectPlaceholders = Array.from({ length: 3 }, (_, i) => (
+    <div key={`project-skeleton-${i}`} className="h-64 rounded-xl border bg-muted animate-pulse" />
+  ));
+  const postPlaceholders = Array.from({ length: 3 }, (_, i) => (
+    <div key={`post-skeleton-${i}`} className="h-72 rounded-xl border bg-muted animate-pulse" />
+  ));
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,15 +80,25 @@ export default function HomePage() {
       {/* Hero */}
       <section className="pt-32 pb-20 px-4 bg-pattern">
         <div className="container mx-auto max-w-4xl text-center animate-fade-in-up">
-          <h1 className="font-serif text-5xl md:text-7xl font-medium tracking-tight mb-6">
-            John Doe
-          </h1>
+          <div className="flex flex-col items-center gap-4 mb-4">
+            {/* {settingsLoaded ? (
+              <img
+                src={settings.avatarUrl}
+                alt="Avatar"
+                className="h-20 w-20 rounded-full object-cover border shadow-sm"
+              />
+            ) : (
+              <div className="h-20 w-20 rounded-full bg-muted animate-pulse border" />
+            )} */}
+            <h1 className="font-serif text-5xl md:text-7xl font-medium tracking-tight">
+              {settings.siteTitle || "Portfolio"}
+            </h1>
+          </div>
           <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-            Full-Stack Developer & Designer
+            {settings.tagline}
           </p>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            I build thoughtful digital experiences with clean code and elegant design.
-            Currently crafting products that matter.
+            {settings.heroIntro}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button variant="hero" size="lg" asChild>
@@ -65,10 +131,17 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProjects.map((project) => (
+            {projectsLoading && projectPlaceholders}
+            {!projectsLoading && featuredProjects.length > 0 && featuredProjects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
+            {!projectsLoading && featuredProjects.length === 0 && (
+              <p className="text-muted-foreground col-span-full">No projects published yet.</p>
+            )}
           </div>
+          {projectsError && !projectsLoading && (
+            <p className="text-sm text-destructive mt-3">{projectsError}</p>
+          )}
         </div>
       </section>
 
@@ -82,10 +155,17 @@ export default function HomePage() {
             </Button>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestPosts.map((post) => (
+            {postsLoading && postPlaceholders}
+            {!postsLoading && latestPosts.length > 0 && latestPosts.map((post) => (
               <BlogCard key={post.slug} post={post} />
             ))}
+            {!postsLoading && latestPosts.length === 0 && (
+              <p className="text-muted-foreground col-span-full">No posts published yet.</p>
+            )}
           </div>
+          {postsError && !postsLoading && (
+            <p className="text-sm text-destructive mt-3">{postsError}</p>
+          )}
         </div>
       </section>
 
@@ -94,10 +174,22 @@ export default function HomePage() {
         <div className="container mx-auto">
           <SectionHeader title="Open Source" subtitle="Contributing to the community" />
           <div className="grid md:grid-cols-2 gap-4">
-            {topRepos.map((repo) => (
-              <RepoCard key={repo.name} repo={repo} />
+            {reposLoading && (
+              <>
+                <div className="h-32 rounded-xl border bg-muted animate-pulse" />
+                <div className="h-32 rounded-xl border bg-muted animate-pulse" />
+              </>
+            )}
+            {!reposLoading && repos.map((repo) => (
+              <RepoCard key={repo.id} repo={repo} />
             ))}
+            {!reposLoading && repos.length === 0 && !reposError && (
+              <p className="text-muted-foreground">No repositories yet.</p>
+            )}
           </div>
+          {reposError && !reposLoading && (
+            <p className="text-sm text-destructive mt-3">{reposError}</p>
+          )}
         </div>
       </section>
 

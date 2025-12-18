@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { FormSection } from '@/components/admin/FormSection';
 import { MarkdownEditor } from '@/components/admin/MarkdownEditor';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getAboutData, saveAboutData, AboutData, TimelineItem } from '@/data/about';
+import { fetchAboutData, saveAboutData, defaultAboutData, AboutData, TimelineItem } from '@/data/about';
 import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
 
 function TimelineEditor({
@@ -111,19 +111,40 @@ function TimelineEditor({
 
 export default function AdminAboutPage() {
   const { toast } = useToast();
-  const [data, setData] = useState<AboutData>(getAboutData());
+  const [data, setData] = useState<AboutData>(defaultAboutData);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAboutData()
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    saveAboutData(data);
-    toast({ title: 'About page saved', description: 'Your changes have been saved.' });
-    setSaving(false);
+    try {
+      const updated = await saveAboutData(data);
+      setData(updated);
+      toast({ title: 'About page saved', description: 'Your changes have been saved.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-serif font-medium">About Page</h1>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif font-medium">About Page</h1>
         <Button onClick={handleSave} disabled={saving}>

@@ -1,15 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FolderKanban, FileText, Plus, Clock } from 'lucide-react';
-import { getProjects } from '@/data/adminProjects';
-import { getPosts } from '@/data/adminPosts';
+import { FolderKanban, FileText, Plus, Clock, GitBranch } from 'lucide-react';
+import { fetchProjects, AdminProject } from '@/data/adminProjects';
+import { fetchPosts, AdminPost } from '@/data/adminPosts';
+import { fetchRepos, AdminRepo } from '@/data/adminRepos';
 
 export default function AdminDashboardPage() {
-  const projects = getProjects();
-  const posts = getPosts();
+  const [projects, setProjects] = useState<AdminProject[]>([]);
+  const [posts, setPosts] = useState<AdminPost[]>([]);
+  const [repos, setRepos] = useState<AdminRepo[]>([]);
+
+  useEffect(() => {
+    fetchProjects().then(setProjects).catch(() => setProjects([]));
+    fetchPosts().then(setPosts).catch(() => setPosts([]));
+    fetchRepos().then(setRepos).catch(() => setRepos([]));
+  }, []);
 
   const stats = [
     {
@@ -24,6 +32,12 @@ export default function AdminDashboardPage() {
       icon: FileText,
       published: posts.filter((p) => p.status === 'published').length,
     },
+    {
+      title: 'Total Open Source',
+      value: repos.length,
+      icon: GitBranch,
+      published: repos.length,
+    }
   ];
 
   const recentActivity = [

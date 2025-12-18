@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,15 +6,31 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable, Column } from '@/components/admin/DataTable';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getPosts, deletePost, AdminPost } from '@/data/adminPosts';
+import { fetchPosts, deletePost, AdminPost } from '@/data/adminPosts';
 import { Plus } from 'lucide-react';
 
 export default function AdminBlogPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [posts, setPosts] = useState<AdminPost[]>(getPosts());
+  const [posts, setPosts] = useState<AdminPost[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'writing' | 'tech'>('all');
+  const [loading, setLoading] = useState(true);
+
+  const loadPosts = async () => {
+    try {
+      const data = await fetchPosts();
+      setPosts(data);
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load posts', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPosts();
+  }, []);
 
   const filteredPosts = categoryFilter === 'all'
     ? posts
@@ -22,10 +38,12 @@ export default function AdminBlogPage() {
 
   const handleDelete = () => {
     if (deleteId) {
-      deletePost(deleteId);
-      setPosts(getPosts());
-      toast({ title: 'Post deleted', description: 'The blog post has been removed.' });
-      setDeleteId(null);
+      deletePost(deleteId)
+        .then(() => {
+          toast({ title: 'Post deleted', description: 'The blog post has been removed.' });
+          return loadPosts();
+        })
+        .finally(() => setDeleteId(null));
     }
   };
 
@@ -84,14 +102,18 @@ export default function AdminBlogPage() {
         </TabsList>
       </Tabs>
 
-      <DataTable
-        data={filteredPosts}
-        columns={columns}
-        searchKey="title"
-        searchPlaceholder="Search posts..."
-        onEdit={(item) => navigate(`/admin/blog/${item.id}/edit`)}
-        onDelete={(item) => setDeleteId(item.id)}
-      />
+      {loading ? (
+        <p className="text-muted-foreground">Loading posts...</p>
+      ) : (
+        <DataTable
+          data={filteredPosts}
+          columns={columns}
+          searchKey="title"
+          searchPlaceholder="Search posts..."
+          onEdit={(item) => navigate(`/admin/blog/${item.id}/edit`)}
+          onDelete={(item) => setDeleteId(item.id)}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteId}

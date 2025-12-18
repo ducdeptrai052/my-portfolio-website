@@ -1,5 +1,3 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
-
 export interface AdminProject {
   id: string;
   title: string;
@@ -12,108 +10,85 @@ export interface AdminProject {
     github?: string;
     demo?: string;
   };
+  featured?: boolean;
   status: 'draft' | 'published';
   createdAt: string;
   updatedAt: string;
 }
 
-const defaultProjects: AdminProject[] = [
-  {
-    id: 'devflow',
-    title: 'DevFlow',
-    slug: 'devflow',
-    shortDescription: 'A visual workflow builder for developers to automate CI/CD pipelines.',
-    fullDescription: `DevFlow reimagines how teams build and manage deployment pipelines. With an intuitive visual interface, developers can create complex workflows without writing YAML.
+import { apiFetch } from "@/lib/api";
+import { uploadAvatar } from "./siteSettings";
 
-## Features
-- Drag-and-drop workflow builder
-- Real-time collaboration
-- Integrated testing
-- Seamless GitHub integration`,
-    tags: ['React', 'TypeScript', 'Node.js', 'PostgreSQL', 'Docker'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1618401471353-b98afee0b2eb?w=600&h=400&fit=crop',
-    links: {
-      github: 'https://github.com/example/devflow',
-      demo: 'https://devflow.example.com',
-    },
-    status: 'published',
-    createdAt: '2024-01-15',
-    updatedAt: '2024-12-10',
+type ProjectApi = {
+  id: string;
+  title?: string;
+  slug?: string;
+  shortDescription?: string;
+  fullDescription?: string;
+  tags?: string[];
+  thumbnailUrl?: string;
+  githubUrl?: string;
+  demoUrl?: string;
+  links?: {
+    github?: string;
+    demo?: string;
+  };
+  featured?: boolean;
+  status?: "draft" | "published";
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+const mapProject = (p: ProjectApi): AdminProject => ({
+  id: p.id,
+  title: p.title ?? "",
+  slug: p.slug ?? "",
+  shortDescription: p.shortDescription ?? "",
+  fullDescription: p.fullDescription ?? "",
+  tags: p.tags ?? [],
+  thumbnailUrl: p.thumbnailUrl ?? "",
+  links: {
+    github: p.links?.github ?? p.githubUrl ?? "",
+    demo: p.links?.demo ?? p.demoUrl ?? "",
   },
-  {
-    id: 'synthwave-ui',
-    title: 'Synthwave UI',
-    slug: 'synthwave-ui',
-    shortDescription: 'A retro-futuristic component library inspired by 80s aesthetics.',
-    fullDescription: `Synthwave UI brings the neon-soaked aesthetic of the 1980s to modern web applications.
+  featured: p.featured ?? false,
+  status: p.status ?? "draft",
+  createdAt: p.createdAt ?? new Date().toISOString(),
+  updatedAt: p.updatedAt ?? new Date().toISOString(),
+});
 
-## Components
-- Buttons with glow effects
-- Neon-styled cards
-- Gradient backgrounds
-- Animated transitions`,
-    tags: ['React', 'Tailwind CSS', 'Storybook', 'Design System'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&h=400&fit=crop',
-    links: {
-      github: 'https://github.com/example/synthwave-ui',
-      demo: 'https://synthwave-ui.example.com',
-    },
-    status: 'published',
-    createdAt: '2024-02-20',
-    updatedAt: '2024-11-05',
-  },
-  {
-    id: 'markdown-studio',
-    title: 'Markdown Studio',
-    slug: 'markdown-studio',
-    shortDescription: 'A distraction-free writing environment with live preview.',
-    fullDescription: `Markdown Studio is built for writers who think in Markdown.
-
-## Features
-- Clean, minimal interface
-- Live preview
-- Custom themes
-- Export to PDF/HTML
-- Cloud sync`,
-    tags: ['Electron', 'React', 'TypeScript', 'MDX'],
-    thumbnailUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=600&h=400&fit=crop',
-    links: {
-      github: 'https://github.com/example/markdown-studio',
-    },
-    status: 'draft',
-    createdAt: '2023-08-10',
-    updatedAt: '2024-10-20',
-  },
-];
-
-export function getProjects(): AdminProject[] {
-  return getStorageItem(STORAGE_KEYS.PROJECTS, defaultProjects);
+export async function fetchProjects(): Promise<AdminProject[]> {
+  const res = await apiFetch<AdminProject[]>("/api/projects");
+  return (res.data ?? []).map(mapProject);
 }
 
-export function getProjectById(id: string): AdminProject | undefined {
-  const projects = getProjects();
-  return projects.find((p) => p.id === id);
+export async function fetchProjectById(id: string): Promise<AdminProject | null> {
+  if (!id) return null;
+  const res = await apiFetch<AdminProject>(`/api/projects/${id}`);
+  return res.data ? mapProject(res.data) : null;
 }
 
-export function saveProject(project: AdminProject): void {
-  const projects = getProjects();
-  const index = projects.findIndex((p) => p.id === project.id);
-  if (index >= 0) {
-    projects[index] = { ...project, updatedAt: new Date().toISOString().split('T')[0] };
-  } else {
-    projects.push({ ...project, createdAt: new Date().toISOString().split('T')[0], updatedAt: new Date().toISOString().split('T')[0] });
-  }
-  setStorageItem(STORAGE_KEYS.PROJECTS, projects);
+export async function createProject(project: AdminProject): Promise<AdminProject> {
+  const res = await apiFetch<AdminProject>("/api/projects", {
+    method: "POST",
+    body: JSON.stringify(project),
+  });
+  return res.data ? mapProject(res.data) : project;
 }
 
-export function deleteProject(id: string): void {
-  const projects = getProjects().filter((p) => p.id !== id);
-  setStorageItem(STORAGE_KEYS.PROJECTS, projects);
+export async function updateProject(project: AdminProject): Promise<AdminProject> {
+  const res = await apiFetch<AdminProject>(`/api/projects/${project.id}`, {
+    method: "PUT",
+    body: JSON.stringify(project),
+  });
+  return res.data ? mapProject(res.data) : project;
 }
 
-export function resetProjects(): AdminProject[] {
-  setStorageItem(STORAGE_KEYS.PROJECTS, defaultProjects);
-  return defaultProjects;
+export async function deleteProject(id: string): Promise<void> {
+  await apiFetch(`/api/projects/${id}`, { method: "DELETE" });
 }
 
-export { defaultProjects };
+export async function uploadProjectImage(file: File, oldUrl?: string): Promise<string> {
+  // Reuse avatar upload endpoint for project thumbnails
+  return uploadAvatar(file, oldUrl);
+}

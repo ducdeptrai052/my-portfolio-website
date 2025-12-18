@@ -1,5 +1,3 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
-
 export interface SiteSettings {
   siteTitle: string;
   tagline: string;
@@ -15,9 +13,24 @@ export interface SiteSettings {
     metaDescription: string;
   };
   avatarUrl: string;
+  resumeUrl?: string;
 }
 
-const defaultSiteSettings: SiteSettings = {
+type BackendSiteSettings = {
+  siteTitle: string;
+  tagline: string;
+  heroIntro: string;
+  socialGithub: string;
+  socialLinkedin: string;
+  socialEmail: string;
+  socialTwitter?: string | null;
+  seoMetaTitle: string;
+  seoMetaDesc: string;
+  avatarUrl: string | null;
+  resumeUrl?: string | null;
+};
+
+export const defaultSiteSettings: SiteSettings = {
   siteTitle: 'minhduc.dev',
   tagline: 'Full-Stack Developer & Designer',
   heroIntro: 'I build beautiful, scalable web applications with modern technologies.',
@@ -31,20 +44,85 @@ const defaultSiteSettings: SiteSettings = {
     metaTitle: 'Minh Duc - Full-Stack Developer',
     metaDescription: 'Personal portfolio of Minh Duc, a full-stack developer specializing in React, TypeScript, and Node.js.',
   },
-  avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+  avatarUrl: '',
+  resumeUrl: '',
 };
 
-export function getSiteSettings(): SiteSettings {
-  return getStorageItem(STORAGE_KEYS.SITE_SETTINGS, defaultSiteSettings);
+import { apiFetch } from "@/lib/api";
+
+const toFrontend = (data?: BackendSiteSettings | null): SiteSettings => {
+  if (!data) return defaultSiteSettings;
+  return {
+    siteTitle: data.siteTitle,
+    tagline: data.tagline,
+    heroIntro: data.heroIntro,
+    socialLinks: {
+      github: data.socialGithub,
+      linkedin: data.socialLinkedin,
+      email: data.socialEmail,
+      twitter: data.socialTwitter ?? "",
+    },
+    seo: {
+      metaTitle: data.seoMetaTitle,
+      metaDescription: data.seoMetaDesc,
+    },
+    avatarUrl: data.avatarUrl || defaultSiteSettings.avatarUrl,
+    resumeUrl: data.resumeUrl || "",
+  };
+};
+
+const toBackend = (settings: SiteSettings): BackendSiteSettings => ({
+  siteTitle: settings.siteTitle,
+  tagline: settings.tagline,
+  heroIntro: settings.heroIntro,
+  socialGithub: settings.socialLinks.github,
+  socialLinkedin: settings.socialLinks.linkedin,
+  socialEmail: settings.socialLinks.email,
+  socialTwitter: settings.socialLinks.twitter || null,
+  seoMetaTitle: settings.seo.metaTitle,
+  seoMetaDesc: settings.seo.metaDescription,
+  avatarUrl: settings.avatarUrl,
+  resumeUrl: settings.resumeUrl || null,
+});
+
+export async function fetchSiteSettings(isPublic = false): Promise<SiteSettings> {
+  const path = isPublic ? "/public/settings" : "/api/settings";
+  try {
+    const res = await apiFetch<BackendSiteSettings>(path);
+    return toFrontend(res.data) ?? defaultSiteSettings;
+  } catch {
+    return defaultSiteSettings;
+  }
 }
 
-export function saveSiteSettings(settings: SiteSettings): void {
-  setStorageItem(STORAGE_KEYS.SITE_SETTINGS, settings);
+export async function updateSiteSettings(settings: SiteSettings): Promise<SiteSettings> {
+  const res = await apiFetch<BackendSiteSettings>("/api/settings", {
+    method: "PUT",
+    body: JSON.stringify(toBackend(settings)),
+  });
+  return toFrontend(res.data) ?? settings;
 }
 
-export function resetSiteSettings(): SiteSettings {
-  setStorageItem(STORAGE_KEYS.SITE_SETTINGS, defaultSiteSettings);
-  return defaultSiteSettings;
+export async function uploadAvatar(file: File, oldUrl?: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const query = oldUrl ? `?oldUrl=${encodeURIComponent(oldUrl)}` : "";
+  const res = await apiFetch<{ url: string }>(`/upload/avatar${query}`, {
+    method: "POST",
+    body: formData,
+  });
+  return res.data?.url ?? "";
 }
 
-export { defaultSiteSettings };
+export async function uploadResume(file: File, oldUrl?: string): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const query = oldUrl ? `?oldUrl=${encodeURIComponent(oldUrl)}` : "";
+  const res = await apiFetch<{ url: string }>(`/upload/resume${query}`, {
+    method: "POST",
+    body: formData,
+  });
+  return res.data?.url ?? "";
+}

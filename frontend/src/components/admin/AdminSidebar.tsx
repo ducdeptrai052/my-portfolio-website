@@ -9,6 +9,7 @@ import {
   Wrench,
   FolderKanban,
   FileText,
+  GitBranch,
   LogOut,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/admin/about', label: 'About', icon: User },
   { path: '/admin/skills', label: 'Skills', icon: Wrench },
   { path: '/admin/projects', label: 'Projects', icon: FolderKanban },
+  { path: '/admin/repos', label: 'Open Source', icon: GitBranch },
   { path: '/admin/blog', label: 'Blog', icon: FileText },
 ];
 

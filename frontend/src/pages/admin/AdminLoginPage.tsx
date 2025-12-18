@@ -25,17 +25,22 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate login delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // UI-only auth - accept any credentials
-    login();
-    toast({
-      title: 'Welcome back!',
-      description: 'You have been logged in successfully.',
-    });
-    navigate('/admin', { replace: true });
-    setLoading(false);
+    try {
+      await login(email, password);
+      toast({
+        title: 'Welcome back!',
+        description: 'You have been logged in successfully.',
+      });
+      navigate('/admin', { replace: true });
+    } catch (error) {
+      toast({
+        title: 'Login failed',
+        description: 'Invalid email or password.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,9 +81,6 @@ export default function AdminLoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Demo mode: Enter any email and password
-          </p>
         </CardContent>
       </Card>
     </div>

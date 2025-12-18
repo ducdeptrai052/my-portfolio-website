@@ -6,7 +6,7 @@ const STORAGE_KEYS = {
   SKILLS: 'admin_skills',
   PROJECTS: 'admin_projects',
   POSTS: 'admin_posts',
-  AUTH: 'admin_authed',
+  AUTH: 'admin_token',
 } as const;
 
 export function getStorageItem<T>(key: string, defaultValue: T): T {

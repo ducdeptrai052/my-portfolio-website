@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -7,7 +7,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { PaginationBar } from "@/components/PaginationBar";
 import { EmptyState } from "@/components/EmptyState";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { posts } from "@/data/posts";
+import { loadPosts, type Post } from "@/data/posts";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -15,6 +15,19 @@ export default function BlogPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPosts()
+      .then((data) => {
+        setPosts(data);
+        setError(null);
+      })
+      .catch((err: any) => setError(err?.message || "Failed to load posts"))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
@@ -23,10 +36,13 @@ export default function BlogPage() {
       const matchesCategory = category === "all" || post.category === category;
       return matchesSearch && matchesCategory;
     });
-  }, [search, category]);
+  }, [posts, search, category]);
 
   const totalPages = Math.ceil(filteredPosts.length / ITEMS_PER_PAGE);
   const paginatedPosts = filteredPosts.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const skeletonCards = Array.from({ length: ITEMS_PER_PAGE }, (_, i) => (
+    <div key={`post-skeleton-${i}`} className="h-72 rounded-xl border bg-muted animate-pulse" />
+  ));
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,7 +62,11 @@ export default function BlogPage() {
             </Tabs>
           </div>
 
-          {paginatedPosts.length > 0 ? (
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {skeletonCards}
+            </div>
+          ) : paginatedPosts.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {paginatedPosts.map((post) => (
                 <BlogCard key={post.slug} post={post} />
@@ -54,6 +74,10 @@ export default function BlogPage() {
             </div>
           ) : (
             <EmptyState title="No posts found" description="Try a different search or category." />
+          )}
+
+          {error && !loading && (
+            <p className="text-sm text-destructive mb-6">{error}</p>
           )}
 
           <PaginationBar currentPage={page} totalPages={totalPages} onPageChange={setPage} />

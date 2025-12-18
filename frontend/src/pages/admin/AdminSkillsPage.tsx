@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getSkillsData, saveSkillsData, SkillsData, SkillGroup, Skill } from '@/data/skills';
+import { fetchSkillsData, saveSkillsData, defaultSkillsData, SkillsData, SkillGroup, Skill } from '@/data/skills';
 import { Save, Plus, Trash2, X } from 'lucide-react';
 
 const SKILL_LEVELS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
@@ -121,15 +121,27 @@ function SkillGroupEditor({
 
 export default function AdminSkillsPage() {
   const { toast } = useToast();
-  const [data, setData] = useState<SkillsData>(getSkillsData());
+  const [data, setData] = useState<SkillsData>(defaultSkillsData);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSkillsData()
+      .then(setData)
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    saveSkillsData(data);
-    toast({ title: 'Skills saved', description: 'Your skills have been updated.' });
-    setSaving(false);
+    try {
+      const updated = await saveSkillsData(data);
+      setData(updated);
+      toast({ title: 'Skills saved', description: 'Your skills have been updated.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save skills', variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addGroup = () => {
@@ -151,8 +163,17 @@ export default function AdminSkillsPage() {
     setData({ groups: data.groups.filter((_, i) => i !== index) });
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-3xl font-serif font-medium">Skills</h1>
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 max-w-5xl mx-auto w-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-serif font-medium">Skills</h1>
         <div className="flex gap-2">

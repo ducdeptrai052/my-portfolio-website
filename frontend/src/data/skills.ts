@@ -1,5 +1,3 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
-
 export interface Skill {
   id: string;
   name: string;
@@ -16,7 +14,7 @@ export interface SkillsData {
   groups: SkillGroup[];
 }
 
-const defaultSkillsData: SkillsData = {
+export const defaultSkillsData: SkillsData = {
   groups: [
     {
       id: 'languages',
@@ -73,17 +71,21 @@ const defaultSkillsData: SkillsData = {
   ],
 };
 
-export function getSkillsData(): SkillsData {
-  return getStorageItem(STORAGE_KEYS.SKILLS, defaultSkillsData);
+import { apiFetch } from "@/lib/api";
+
+export async function fetchSkillsData(isPublic = false): Promise<SkillsData> {
+  try {
+    const res = await apiFetch<SkillsData>(isPublic ? "/public/skills" : "/api/skills");
+    return res.data ?? defaultSkillsData;
+  } catch {
+    return defaultSkillsData;
+  }
 }
 
-export function saveSkillsData(data: SkillsData): void {
-  setStorageItem(STORAGE_KEYS.SKILLS, data);
+export async function saveSkillsData(data: SkillsData): Promise<SkillsData> {
+  const res = await apiFetch<SkillsData>("/api/skills", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data ?? data;
 }
-
-export function resetSkillsData(): SkillsData {
-  setStorageItem(STORAGE_KEYS.SKILLS, defaultSkillsData);
-  return defaultSkillsData;
-}
-
-export { defaultSkillsData };

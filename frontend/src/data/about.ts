@@ -1,5 +1,3 @@
-import { getStorageItem, setStorageItem, STORAGE_KEYS } from '@/lib/storage';
-
 export interface TimelineItem {
   id: string;
   title: string;
@@ -15,7 +13,7 @@ export interface AboutData {
   experience: TimelineItem[];
 }
 
-const defaultAboutData: AboutData = {
+export const defaultAboutData: AboutData = {
   shortBio: 'Full-Stack Developer with 10+ years of experience building web applications.',
   longStory: `I'm a passionate developer who loves creating elegant solutions to complex problems. My journey in tech started when I built my first website at 15, and I've been hooked ever since.
 
@@ -63,17 +61,22 @@ When I'm not coding, you can find me reading, hiking, or experimenting with new 
   ],
 };
 
-export function getAboutData(): AboutData {
-  return getStorageItem(STORAGE_KEYS.ABOUT, defaultAboutData);
+import { apiFetch } from "@/lib/api";
+
+export async function fetchAboutData(isPublic = false): Promise<AboutData> {
+  const path = isPublic ? "/public/about" : "/api/about";
+  try {
+    const res = await apiFetch<AboutData>(path);
+    return res.data ?? defaultAboutData;
+  } catch {
+    return defaultAboutData;
+  }
 }
 
-export function saveAboutData(data: AboutData): void {
-  setStorageItem(STORAGE_KEYS.ABOUT, data);
+export async function saveAboutData(data: AboutData): Promise<AboutData> {
+  const res = await apiFetch<AboutData>("/api/about", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  return res.data ?? data;
 }
-
-export function resetAboutData(): AboutData {
-  setStorageItem(STORAGE_KEYS.ABOUT, defaultAboutData);
-  return defaultAboutData;
-}
-
-export { defaultAboutData };

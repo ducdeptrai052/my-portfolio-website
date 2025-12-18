@@ -6,10 +6,10 @@ interface TerminalBlockProps {
 }
 
 const terminalLines = [
-  { prompt: "~", command: "whoami", output: "john_doe" },
-  { prompt: "~", command: "cat skills.txt", output: "TypeScript, React, Node.js, Go, PostgreSQL..." },
+  { prompt: "~", command: "whoami", output: "ho_minh_duc" },
+  { prompt: "~", command: "cat skills.txt", output: "TypeScript, React, Node.js, Express, Prisma, PostgreSQL..." },
   { prompt: "~", command: "echo $PASSION", output: "Building products that matter" },
-  { prompt: "~", command: "uptime", output: "10+ years in software development" },
+  { prompt: "~", command: "uptime", output: "1 year in software development" },
 ];
 
 export function TerminalBlock({ className }: TerminalBlockProps) {

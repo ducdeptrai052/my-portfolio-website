@@ -12,10 +12,23 @@ import { FormSection } from '@/components/admin/FormSection';
 import { TagChipsInput } from '@/components/admin/TagChipsInput';
 import { MarkdownEditor } from '@/components/admin/MarkdownEditor';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getProjectById, saveProject, deleteProject, AdminProject } from '@/data/adminProjects';
+import { fetchProjectById, createProject, updateProject, deleteProject, uploadProjectImage, AdminProject } from '@/data/adminProjects';
 import { Save, Trash2, ArrowLeft, Eye } from 'lucide-react';
 
 const COMMON_TAGS = ['React', 'TypeScript', 'Node.js', 'Next.js', 'Tailwind CSS', 'PostgreSQL', 'Docker', 'AWS'];
+
+const slugify = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 export default function AdminProjectEditorPage() {
   const { id } = useParams();
@@ -36,17 +49,22 @@ export default function AdminProjectEditorPage() {
     createdAt: new Date().toISOString().split('T')[0],
     updatedAt: new Date().toISOString().split('T')[0],
   });
+  const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [uploadingThumb, setUploadingThumb] = useState(false);
 
   useEffect(() => {
     if (!isNew && id) {
-      const existing = getProjectById(id);
-      if (existing) {
-        setProject(existing);
-      } else {
-        navigate('/admin/projects');
-      }
+      fetchProjectById(id)
+        .then((existing) => {
+          if (existing) {
+            setProject(existing);
+          } else {
+            navigate('/admin/projects');
+          }
+        })
+        .finally(() => setLoading(false));
     }
   }, [id, isNew, navigate]);
 
@@ -56,16 +74,18 @@ export default function AdminProjectEditorPage() {
         const linkField = field.replace('links.', '');
         return { ...prev, links: { ...prev.links, [linkField]: value } };
       }
+      if (field === 'title') {
+        const nextSlug = prev.slug ? prev.slug : slugify(value);
+        return { ...prev, title: value, slug: nextSlug };
+      }
       return { ...prev, [field]: value };
     });
   };
 
   const generateSlug = () => {
-    const slug = project.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    handleChange('slug', slug);
+    const slug = slugify(project.title) || project.slug;
+    handleChange('slug', slug || project.slug);
+    return slug;
   };
 
   const handleSave = async (status?: 'draft' | 'published') => {
@@ -73,25 +93,59 @@ export default function AdminProjectEditorPage() {
       toast({ title: 'Error', description: 'Title is required.', variant: 'destructive' });
       return;
     }
+    const ensuredSlug = project.slug.trim() || generateSlug();
+    if (!ensuredSlug) {
+      toast({ title: 'Error', description: 'Slug is required.', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const updated = { ...project, status: status || project.status };
-    saveProject(updated);
-    toast({
-      title: isNew ? 'Project created' : 'Project saved',
-      description: status === 'published' ? 'Your project is now live.' : 'Your changes have been saved.',
-    });
-    setSaving(false);
-    if (isNew) {
-      navigate(`/admin/projects/${updated.id}/edit`);
+    const updated: AdminProject = { ...project, slug: ensuredSlug, status: status || project.status };
+    try {
+      let saved: AdminProject;
+      if (isNew) {
+        saved = await createProject(updated);
+        navigate(`/admin/projects/${saved.id}/edit`, { replace: true });
+      } else {
+        saved = await updateProject(updated);
+      }
+      setProject(saved);
+      toast({
+        title: isNew ? 'Project created' : 'Project saved',
+        description: status === 'published' ? 'Your project is now live.' : 'Your changes have been saved.',
+      });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error?.message || 'Failed to save project', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = () => {
-    deleteProject(project.id);
-    toast({ title: 'Project deleted', description: 'The project has been removed.' });
-    navigate('/admin/projects');
+    deleteProject(project.id)
+      .then(() => {
+        toast({ title: 'Project deleted', description: 'The project has been removed.' });
+        navigate('/admin/projects');
+      })
+      .catch(() => toast({ title: 'Error', description: 'Failed to delete project', variant: 'destructive' }));
   };
+
+  const handleThumbnailUpload = async (file?: File | null) => {
+    if (!file) return;
+    setUploadingThumb(true);
+    try {
+      const url = await uploadProjectImage(file, project.thumbnailUrl);
+      setProject((prev) => ({ ...prev, thumbnailUrl: url }));
+      toast({ title: 'Uploaded', description: 'Thumbnail updated.' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to upload thumbnail', variant: 'destructive' });
+    } finally {
+      setUploadingThumb(false);
+    }
+  };
+
+  if (loading) {
+    return <p className="text-muted-foreground">Loading project...</p>;
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -197,7 +251,7 @@ export default function AdminProjectEditorPage() {
             <CardHeader>
               <CardTitle>Status</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <Select
                 value={project.status}
                 onValueChange={(value) => handleChange('status', value)}
@@ -210,6 +264,18 @@ export default function AdminProjectEditorPage() {
                   <SelectItem value="published">Published</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <input
+                  id="featured"
+                  type="checkbox"
+                  checked={project.featured ?? false}
+                  onChange={(e) => handleChange('featured', e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <Label htmlFor="featured" className="cursor-pointer">
+                  Featured (show on homepage)
+                </Label>
+              </div>
             </CardContent>
           </Card>
 
@@ -239,6 +305,16 @@ export default function AdminProjectEditorPage() {
                   onChange={(e) => handleChange('thumbnailUrl', e.target.value)}
                   placeholder="https://..."
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Upload Image</Label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleThumbnailUpload(e.target.files?.[0] || null)}
+                  disabled={uploadingThumb}
+                />
+                {uploadingThumb && <p className="text-xs text-muted-foreground">Uploading...</p>}
               </div>
               {project.thumbnailUrl && (
                 <img

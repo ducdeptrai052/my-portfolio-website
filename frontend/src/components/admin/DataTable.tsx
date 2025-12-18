@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 export interface Column<T> {
-  key: string;
+  key: keyof T;
   header: string;
   render?: (item: T) => React.ReactNode;
 }
@@ -69,7 +69,7 @@ export function DataTable<T extends { id: string }>({
           <TableHeader>
             <TableRow>
               {columns.map((column) => (
-                <TableHead key={column.key}>{column.header}</TableHead>
+                <TableHead key={String(column.key)}>{column.header}</TableHead>
               ))}
               {(onEdit || onDelete) && <TableHead className="w-[80px]">Actions</TableHead>}
             </TableRow>
@@ -85,8 +85,8 @@ export function DataTable<T extends { id: string }>({
               filteredData.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((column) => (
-                    <TableCell key={column.key}>
-                      {column.render ? column.render(item) : String((item as any)[column.key] || '')}
+                    <TableCell key={String(column.key)}>
+                      {column.render ? column.render(item) : String(item[column.key] ?? '')}
                     </TableCell>
                   ))}
                   {(onEdit || onDelete) && (

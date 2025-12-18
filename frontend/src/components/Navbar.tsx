@@ -3,12 +3,13 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
 
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/projects", label: "Projects" },
   { href: "/blog", label: "Blog" },
-  { href: "/about", label: "About" },
+  { href: "/about", label: "About Me" },
   { href: "/resume", label: "Resume" },
   { href: "/contact", label: "Contact" },
 ];
@@ -17,6 +18,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [siteTitle, setSiteTitle] = useState(defaultSiteSettings.siteTitle);
   const location = useLocation();
 
   useEffect(() => {
@@ -30,6 +32,12 @@ export function Navbar() {
   useEffect(() => {
     const isDarkMode = document.documentElement.classList.contains("dark");
     setIsDark(isDarkMode);
+  }, []);
+
+  useEffect(() => {
+    fetchSiteSettings(true).then((settings) => {
+      setSiteTitle(settings.siteTitle || defaultSiteSettings.siteTitle);
+    });
   }, []);
 
   const toggleTheme = () => {
@@ -59,7 +67,7 @@ export function Navbar() {
             to="/"
             className="font-serif text-xl font-semibold tracking-tight hover:text-accent transition-colors"
           >
-            JD
+            {siteTitle}
           </Link>
 
           {/* Desktop Navigation */}

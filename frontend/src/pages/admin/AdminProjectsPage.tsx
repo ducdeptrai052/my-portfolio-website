@@ -1,25 +1,43 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable, Column } from '@/components/admin/DataTable';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getProjects, deleteProject, AdminProject } from '@/data/adminProjects';
+import { fetchProjects, deleteProject, AdminProject } from '@/data/adminProjects';
 import { Plus } from 'lucide-react';
 
 export default function AdminProjectsPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [projects, setProjects] = useState<AdminProject[]>(getProjects());
+  const [projects, setProjects] = useState<AdminProject[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const loadProjects = async () => {
+    try {
+      const data = await fetchProjects();
+      setProjects(data);
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to load projects', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const handleDelete = () => {
     if (deleteId) {
-      deleteProject(deleteId);
-      setProjects(getProjects());
-      toast({ title: 'Project deleted', description: 'The project has been removed.' });
-      setDeleteId(null);
+      deleteProject(deleteId)
+        .then(() => {
+          toast({ title: 'Project deleted', description: 'The project has been removed.' });
+          return loadProjects();
+        })
+        .finally(() => setDeleteId(null));
     }
   };
 
@@ -79,14 +97,18 @@ export default function AdminProjectsPage() {
         </Button>
       </div>
 
-      <DataTable
-        data={projects}
-        columns={columns}
-        searchKey="title"
-        searchPlaceholder="Search projects..."
-        onEdit={(item) => navigate(`/admin/projects/${item.id}/edit`)}
-        onDelete={(item) => setDeleteId(item.id)}
-      />
+      {loading ? (
+        <p className="text-muted-foreground">Loading projects...</p>
+      ) : (
+        <DataTable
+          data={projects}
+          columns={columns}
+          searchKey="title"
+          searchPlaceholder="Search projects..."
+          onEdit={(item) => navigate(`/admin/projects/${item.id}/edit`)}
+          onDelete={(item) => setDeleteId(item.id)}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deleteId}

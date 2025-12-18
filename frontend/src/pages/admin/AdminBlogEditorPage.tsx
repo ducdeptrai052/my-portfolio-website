@@ -7,10 +7,23 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { MarkdownEditor } from '@/components/admin/MarkdownEditor';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog';
-import { getPostById, savePost, deletePost, AdminPost } from '@/data/adminPosts';
+import { fetchPostById, createPost, updatePost, deletePost, AdminPost } from '@/data/adminPosts';
 import { Save, Trash2, ArrowLeft } from 'lucide-react';
+
+const slugify = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'd')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
 
 export default function AdminBlogEditorPage() {
   const { id } = useParams();
@@ -32,27 +45,34 @@ export default function AdminBlogEditorPage() {
   });
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [loading, setLoading] = useState(!isNew);
 
   useEffect(() => {
     if (!isNew && id) {
-      const existing = getPostById(id);
-      if (existing) {
-        setPost(existing);
-      } else {
-        navigate('/admin/blog');
-      }
+      fetchPostById(id)
+        .then((existing) => {
+          if (existing) {
+            setPost(existing);
+          } else {
+            navigate('/admin/blog');
+          }
+        })
+        .finally(() => setLoading(false));
     }
   }, [id, isNew, navigate]);
 
   const handleChange = (field: keyof AdminPost, value: any) => {
-    setPost((prev) => ({ ...prev, [field]: value }));
+    setPost((prev) => {
+      if (field === 'title') {
+        const nextSlug = prev.slug ? prev.slug : slugify(value);
+        return { ...prev, title: value, slug: nextSlug };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   const generateSlug = () => {
-    const slug = post.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+    const slug = slugify(post.title) || post.slug;
     handleChange('slug', slug);
   };
 
@@ -62,27 +82,42 @@ export default function AdminBlogEditorPage() {
       return;
     }
     setSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 300));
     const updated = { ...post, status: status || post.status };
-    savePost(updated);
-    toast({
-      title: isNew ? 'Post created' : 'Post saved',
-      description: status === 'published' ? 'Your post is now live.' : 'Your changes have been saved.',
-    });
-    setSaving(false);
-    if (isNew) {
-      navigate(`/admin/blog/${updated.id}/edit`);
+    try {
+      let saved: AdminPost;
+      if (isNew) {
+        saved = await createPost(updated);
+        navigate(`/admin/blog/${saved.id}/edit`, { replace: true });
+      } else {
+        saved = await updatePost(updated);
+      }
+      setPost(saved);
+      toast({
+        title: isNew ? 'Post created' : 'Post saved',
+        description: status === 'published' ? 'Your post is now live.' : 'Your changes have been saved.',
+      });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to save post', variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = () => {
-    deletePost(post.id);
-    toast({ title: 'Post deleted', description: 'The blog post has been removed.' });
-    navigate('/admin/blog');
+    deletePost(post.id)
+      .then(() => {
+        toast({ title: 'Post deleted', description: 'The blog post has been removed.' });
+        navigate('/admin/blog');
+      })
+      .catch(() => toast({ title: 'Error', description: 'Failed to delete post', variant: 'destructive' }));
   };
 
+  if (loading) {
+    return <p className="text-muted-foreground">Loading post...</p>;
+  }
+
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-6xl mx-auto w-full">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate('/admin/blog')}>
           <ArrowLeft className="h-4 w-4" />
@@ -146,11 +181,10 @@ export default function AdminBlogEditorPage() {
               </div>
               <div className="space-y-2">
                 <Label>Content</Label>
-                <MarkdownEditor
+                <RichTextEditor
                   value={post.content}
                   onChange={(value) => handleChange('content', value)}
-                  placeholder="Write your blog post in Markdown..."
-                  minHeight="400px"
+                  placeholder="Write your blog post..."
                 />
               </div>
             </CardContent>
