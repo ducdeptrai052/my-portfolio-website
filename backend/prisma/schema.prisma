@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PublishStatus {
+  draft
+  published
+}
+
+enum PostCategory {
+  tech
+  writing
+}
+
+enum TimelineType {
+  education
+  experience
+}
+
+enum SkillLevel {
+  beginner
+  intermediate
+  advanced
+  expert
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("admin")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  refreshTokens RefreshToken[]
+}
+
+model SiteSetting {
+  id             Int      @id @default(1)
+  siteTitle      String
+  tagline        String
+  heroIntro      String
+  socialGithub   String
+  socialLinkedin String
+  socialEmail    String
+  socialTwitter  String?
+  seoMetaTitle   String
+  seoMetaDesc    String
+  avatarUrl      String
+  resumeUrl      String?
+  updatedAt      DateTime @updatedAt
+}
+
+model About {
+  id        Int             @id @default(1)
+  shortBio  String
+  longStory String
+  timelines TimelineEntry[]
+  updatedAt DateTime @updatedAt
+}
+
+model TimelineEntry {
+  id           String       @id @default(cuid())
+  type         TimelineType
+  title        String
+  organization String
+  period       String
+  description  String
+  about        About        @relation(fields: [aboutId], references: [id])
+  aboutId      Int
+}
+
+model SkillGroup {
+  id     String  @id @default(cuid())
+  name   String
+  skills Skill[]
+}
+
+model Skill {
+  id      String      @id @default(cuid())
+  name    String
+  level   SkillLevel?
+  group   SkillGroup  @relation(fields: [groupId], references: [id])
+  groupId String
+}
+
+model Project {
+  id               String        @id @default(cuid())
+  title            String
+  slug             String        @unique
+  shortDescription String
+  fullDescription  String
+  tags             String[]
+  thumbnailUrl     String?
+  githubUrl        String?
+  demoUrl          String?
+  featured         Boolean       @default(false)
+  status           PublishStatus @default(draft)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model Post {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  excerpt       String
+  content       String
+  category      PostCategory
+  coverImageUrl String?
+  status        PublishStatus @default(draft)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Repo {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String   @default("")
+  url         String
+  language    String   @default("")
+  stars       Int      @default(0)
+  forks       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  tokenHash  String
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
