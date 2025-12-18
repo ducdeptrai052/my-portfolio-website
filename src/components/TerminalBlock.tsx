@@ -6,7 +6,7 @@ interface TerminalBlockProps {
 }
 
 const terminalLines = [
-  { prompt: "~", command: "whoami", output: "john_doe" },
+  { prompt: "~", command: "whoami", output: "minh_duc" },
   { prompt: "~", command: "cat skills.txt", output: "TypeScript, React, Node.js, Go, PostgreSQL..." },
   { prompt: "~", command: "echo $PASSION", output: "Building products that matter" },
   { prompt: "~", command: "uptime", output: "10+ years in software development" },

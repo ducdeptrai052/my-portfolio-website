@@ -25,7 +25,7 @@ export default function HomePage() {
       <section className="pt-32 pb-20 px-4 bg-pattern">
         <div className="container mx-auto max-w-4xl text-center animate-fade-in-up">
           <h1 className="font-serif text-5xl md:text-7xl font-medium tracking-tight mb-6">
-            John Doe
+            Minh Duc
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-4">
             Full-Stack Developer & Designer

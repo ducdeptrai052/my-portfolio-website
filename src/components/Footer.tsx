@@ -30,7 +30,7 @@ export function Footer() {
               to="/"
               className="font-serif text-2xl font-semibold tracking-tight"
             >
-              John Doe
+              Minh Duc
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
               Full-stack developer crafting thoughtful digital experiences.
@@ -77,7 +77,7 @@ export function Footer() {
         <Separator className="my-8" />
 
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© {currentYear} John Doe. All rights reserved.</p>
+          <p>© {currentYear} Minh Duc. All rights reserved.</p>
           <p>Built with React & Tailwind CSS</p>
         </div>
       </div>

@@ -31,9 +31,9 @@ export default function AboutPage() {
       <main className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="flex flex-col md:flex-row gap-8 mb-16">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="John Doe" className="w-32 h-32 rounded-full object-cover" />
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Minh Duc" className="w-32 h-32 rounded-full object-cover" />
             <div>
-              <h1 className="font-serif text-4xl font-medium mb-2">John Doe</h1>
+              <h1 className="font-serif text-4xl font-medium mb-2">Minh Duc</h1>
               <p className="text-xl text-muted-foreground mb-4">Full-Stack Developer & Designer</p>
               <p className="text-muted-foreground">San Francisco, CA</p>
             </div>

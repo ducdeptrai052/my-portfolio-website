@@ -59,7 +59,7 @@ export function Navbar() {
             to="/"
             className="font-serif text-xl font-semibold tracking-tight hover:text-accent transition-colors"
           >
-            JD
+            minhduc.dev
           </Link>
 
           {/* Desktop Navigation */}
