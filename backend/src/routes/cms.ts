@@ -458,4 +458,33 @@ router.delete("/repos/:id", async (req, res) => {
   }
 });
 
+// Contact messages
+router.get("/messages", async (_req, res) => {
+  const messages = await prisma.contactMessage.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return sendOk(res, messages);
+});
+
+router.put("/messages/:id/read", async (req, res) => {
+  try {
+    const updated = await prisma.contactMessage.update({
+      where: { id: req.params.id },
+      data: { isRead: true, readAt: new Date() },
+    });
+    return sendOk(res, updated, "Message marked as read");
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to update message", 400);
+  }
+});
+
+router.delete("/messages/:id", async (req, res) => {
+  try {
+    await prisma.contactMessage.delete({ where: { id: req.params.id } });
+    return sendOk(res, null, "Message deleted");
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to delete message", 400);
+  }
+});
+
 export default router;

@@ -144,3 +144,17 @@ model RefreshToken {
 
   @@index([userId])
 }
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  company   String?
+  category  String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+}

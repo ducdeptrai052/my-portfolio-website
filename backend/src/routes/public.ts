@@ -1,6 +1,7 @@
 import express from "express";
 import prisma from "../lib/prisma";
-import { sendOk, sendError } from "../utils/response";
+import { sendOk, sendError, sendCreated } from "../utils/response";
+import { sendContactNotification } from "../lib/mailer";
 
 const router = express.Router();
 
@@ -79,6 +80,61 @@ router.get("/repos", async (_req, res) => {
     return sendOk(res, repos);
   } catch (error: any) {
     return sendError(res, error?.message || "Failed to fetch repos", 500);
+  }
+});
+
+router.post("/contact", async (req, res) => {
+  const {
+    name,
+    email,
+    phone = null,
+    company = null,
+    category,
+    subject,
+    message,
+  } = req.body || {};
+
+  if (!name || !email || !category || !subject || !message) {
+    return sendError(res, "Missing required fields", 400);
+  }
+
+  try {
+    const created = await prisma.contactMessage.create({
+      data: {
+        name,
+        email,
+        phone,
+        company,
+        category,
+        subject,
+        message,
+      },
+    });
+
+    let emailSent = false;
+    try {
+      const result = await sendContactNotification({
+        name: created.name,
+        email: created.email,
+        phone: created.phone,
+        company: created.company,
+        category: created.category,
+        subject: created.subject,
+        message: created.message,
+        createdAt: created.createdAt,
+      });
+      emailSent = result.sent;
+    } catch (err) {
+      console.error("Failed to send contact email", err);
+    }
+
+    const responseMessage = emailSent
+      ? "Message sent"
+      : "Message received (email notification unavailable)";
+
+    return sendCreated(res, { id: created.id, emailSent }, responseMessage);
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to submit message", 500);
   }
 });
 
