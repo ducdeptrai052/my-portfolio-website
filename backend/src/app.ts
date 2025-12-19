@@ -10,14 +10,25 @@ import cookieParser from "cookie-parser";
 
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL || "http://localhost:8080";
+const normalizeOrigin = (value: string) => value.replace(/\/+$/, "");
+const allowedOrigins = (process.env.FRONTEND_URLS || process.env.FRONTEND_URL || "http://localhost:8080")
+  .split(",")
+  .map((value) => normalizeOrigin(value.trim()))
+  .filter(Boolean);
 
 // Disable default ETag/304 handling to avoid cached API responses in admin
 app.set("etag", false);
 
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      const normalized = normalizeOrigin(origin);
+      if (allowedOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
