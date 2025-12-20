@@ -23,6 +23,8 @@ export function BlogCard({ post }: BlogCardProps) {
             src={post.coverImage}
             alt={post.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+            decoding="async"
           />
           <div className="absolute top-4 left-4">
             <Badge

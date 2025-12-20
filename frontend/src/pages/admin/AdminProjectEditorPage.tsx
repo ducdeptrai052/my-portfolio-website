@@ -316,13 +316,15 @@ export default function AdminProjectEditorPage() {
                 />
                 {uploadingThumb && <p className="text-xs text-muted-foreground">Uploading...</p>}
               </div>
-              {project.thumbnailUrl && (
-                <img
-                  src={project.thumbnailUrl}
-                  alt="Thumbnail preview"
-                  className="w-full aspect-video object-cover rounded-md border"
-                />
-              )}
+                {project.thumbnailUrl && (
+                  <img
+                    src={project.thumbnailUrl}
+                    alt="Thumbnail preview"
+                    className="w-full aspect-video object-cover rounded-md border"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
             </CardContent>
           </Card>
         </div>

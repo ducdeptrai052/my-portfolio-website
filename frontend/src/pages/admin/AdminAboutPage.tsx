@@ -187,12 +187,14 @@ export default function AdminAboutPage() {
           <div className="space-y-4">
             <Label>Avatar</Label>
             <div className="flex items-center gap-4">
-              {data.avatarUrl ? (
-                <img
-                  src={data.avatarUrl}
-                  alt="Avatar"
-                  className="h-40 w-40 rounded-full object-cover border"
-                />
+                {data.avatarUrl ? (
+                  <img
+                    src={data.avatarUrl}
+                    alt="Avatar"
+                    className="h-40 w-40 rounded-full object-cover border"
+                    loading="lazy"
+                    decoding="async"
+                  />
               ) : (
                 <div className="h-40 w-40 rounded-full bg-muted border" />
               )}

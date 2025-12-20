@@ -44,6 +44,9 @@ export default function AboutPage() {
                   src={about.avatarUrl}
                   alt={settings.siteTitle}
                   className="w-40 h-40 rounded-full object-cover border"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
               ) : (
                 <div className="w-40 h-40 rounded-full bg-muted border" />

@@ -59,6 +59,8 @@ export default function ResumePage() {
                     src={resumeUrl}
                     alt="Resume preview"
                     className="max-h-[80vh] w-full object-contain rounded-md border bg-background"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
               )

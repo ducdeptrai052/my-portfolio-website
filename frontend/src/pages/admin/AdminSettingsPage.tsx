@@ -188,13 +188,15 @@ export default function AdminSettingsPage() {
                   {settings.resumeUrl.match(/\\.pdf($|\\?)/i) ? (
                     <p className="text-xs text-muted-foreground">Preview shown on Resume page.</p>
                   ) : (
-                    <div className="border rounded-md overflow-hidden">
-                      <img
-                        src={settings.resumeUrl}
-                        alt="Resume preview"
-                        className="max-h-64 w-full object-contain bg-muted"
-                      />
-                    </div>
+                      <div className="border rounded-md overflow-hidden">
+                        <img
+                          src={settings.resumeUrl}
+                          alt="Resume preview"
+                          className="max-h-64 w-full object-contain bg-muted"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </div>
                   )}
                 </div>
               )}

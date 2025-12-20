@@ -372,13 +372,15 @@ export default function AdminBlogEditorPage() {
                   placeholder="https://..."
                 />
               </div>
-              {post.coverImageUrl && (
-                <img
-                  src={post.coverImageUrl}
-                  alt="Cover preview"
-                  className="w-full aspect-video object-cover rounded-md border"
-                />
-              )}
+                {post.coverImageUrl && (
+                  <img
+                    src={post.coverImageUrl}
+                    alt="Cover preview"
+                    className="w-full aspect-video object-cover rounded-md border"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
             </CardContent>
           </Card>
         </div>

@@ -88,6 +88,13 @@ const addIdsToHtml = (html: string, toc: TocItem[]) => {
     const item = toc[index];
     if (item) heading.id = item.id;
   });
+  doc.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
+  });
+  doc.querySelectorAll("iframe").forEach((frame) => {
+    frame.setAttribute("loading", "lazy");
+  });
   return doc.body.innerHTML;
 };
 
@@ -261,7 +268,9 @@ export default function BlogDetailPage() {
                           setTocOffset(Math.max(0, Math.round(titleTop - contentTop)));
                         }
                       }}
-                      loading="lazy"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                     />
                   </div>
                 )}
@@ -303,6 +312,13 @@ export default function BlogDetailPage() {
                             const id = slugify(text);
                             return <h3 id={id} {...props} />;
                           },
+                          img: ({ node: _node, ...props }) => (
+                            <img
+                              {...props}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ),
                         }}
                       >
                         {post.content}
