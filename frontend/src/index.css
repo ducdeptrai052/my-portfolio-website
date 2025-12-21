@@ -97,6 +97,20 @@
   outline: none;
 }
 
+.tiptap-editor .ProseMirror img,
+.tiptap-editor .ProseMirror iframe,
+.tiptap-editor .ProseMirror video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+}
+
+.tiptap-editor .ProseMirror iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
 .tiptap-editor .ProseMirror > p:first-child {
   font-size: 2.25rem;
   line-height: 1.2;

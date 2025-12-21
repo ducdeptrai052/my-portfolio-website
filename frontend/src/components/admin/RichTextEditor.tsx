@@ -1,24 +1,37 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BubbleMenu } from "@tiptap/react/menus";
 import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
   Bold,
-  Italic,
-  Strikethrough,
   Code,
-  Quote,
+  Code2,
+  Film,
+  Image as ImageIcon,
+  Italic,
+  Link as LinkIcon,
   List,
   ListOrdered,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Film,
-  Code2,
   Minus,
+  Quote,
+  Redo2,
+  Strikethrough,
+  Undo2,
+  ChevronDown,
+  Upload,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { uploadMedia } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
 import { ARTICLE_PROSE_CLASSES, getEditorExtensions, parseJsonDoc } from "@/lib/editor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface RichTextEditorProps {
   value: string;
@@ -54,6 +67,7 @@ export function RichTextEditor({
   const linkInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const youtubeInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const lastValueRef = useRef<string>("");
 
   const parsedValue = useMemo(() => {
@@ -152,6 +166,7 @@ export function RichTextEditor({
     try {
       const url = onImageUpload ? await onImageUpload(file) : await uploadMedia(file);
       focusChain().setImage({ src: url }).run();
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } finally {
       setIsUploading(false);
     }
@@ -162,248 +177,318 @@ export function RichTextEditor({
     active,
     children,
     title,
+    disabled,
   }: {
     onClick: () => void;
     active?: boolean;
     children: React.ReactNode;
     title?: string;
+    disabled?: boolean;
   }) => (
     <button
       type="button"
       className={cn(
-        "h-9 w-9 flex items-center justify-center rounded-lg text-sm font-semibold text-[#444] transition",
-        active ? "bg-black text-white" : "hover:bg-[#f3f4f6]"
+        "h-8 w-8 flex items-center justify-center rounded-full text-sm font-semibold transition",
+        active
+          ? "bg-primary/15 text-primary"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+        disabled && "opacity-40 pointer-events-none"
       )}
       onClick={onClick}
       title={title}
+      disabled={disabled}
     >
       {children}
     </button>
   );
 
-  const bubbleContent = (
-    <div className="flex items-center gap-2 px-2 py-2 bg-white/95 dark:bg-card border border-border rounded-xl shadow-sm">
-      <ToggleButton
-        onClick={() => focusChain().toggleHeading({ level: 2 }).run()}
-        active={editor.isActive("heading", { level: 2 })}
-        title="Heading 2"
-      >
-        H2
-      </ToggleButton>
-      <ToggleButton
-        onClick={() => focusChain().toggleHeading({ level: 3 }).run()}
-        active={editor.isActive("heading", { level: 3 })}
-        title="Heading 3"
-      >
-        H3
-      </ToggleButton>
-      <ToggleButton
-        onClick={() => focusChain().toggleBold().run()}
-        active={editor.isActive("bold")}
-        title="Bold"
-      >
-        <Bold className="h-4 w-4" />
-      </ToggleButton>
-      <ToggleButton
-        onClick={() => focusChain().toggleItalic().run()}
-        active={editor.isActive("italic")}
-        title="Italic"
-      >
-        <Italic className="h-4 w-4" />
-      </ToggleButton>
-      <ToggleButton
-        onClick={() => focusChain().toggleBlockquote().run()}
-        active={editor.isActive("blockquote")}
-        title="Quote"
-      >
-        <Quote className="h-4 w-4" />
-      </ToggleButton>
-      <ToggleButton onClick={() => setShowLinkInput(true)} active={editor.isActive("link")} title="Link">
-        <LinkIcon className="h-4 w-4" />
-      </ToggleButton>
-    </div>
-  );
+  const headingLabel = editor.isActive("heading", { level: 1 })
+    ? "H1"
+    : editor.isActive("heading", { level: 2 })
+    ? "H2"
+    : editor.isActive("heading", { level: 3 })
+    ? "H3"
+    : editor.isActive("heading", { level: 4 })
+    ? "H4"
+    : "P";
 
   return (
     <div className="relative space-y-3">
-      <BubbleMenu
-        editor={editor}
-        shouldShow={({ editor }) => {
-          const { empty } = editor.state.selection;
-          return editor.isFocused && !empty;
-        }}
-      >
-        {bubbleContent}
-      </BubbleMenu>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-white/95 dark:bg-card px-3 py-2 shadow-sm">
-        <ToggleButton
-        onClick={() => focusChain().toggleHeading({ level: 2 }).run()}
-          active={editor.isActive("heading", { level: 2 })}
-          title="Heading 2"
-        >
-          H2
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleHeading({ level: 3 }).run()}
-          active={editor.isActive("heading", { level: 3 })}
-          title="Heading 3"
-        >
-          H3
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleBold().run()}
-          active={editor.isActive("bold")}
-          title="Bold"
-        >
-          <Bold className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleItalic().run()}
-          active={editor.isActive("italic")}
-          title="Italic"
-        >
-          <Italic className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleUnderline().run()}
-          active={editor.isActive("underline")}
-          title="Underline"
-        >
-          <Minus className="h-4 w-4 rotate-90" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleStrike().run()}
-          active={editor.isActive("strike")}
-          title="Strikethrough"
-        >
-          <Strikethrough className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleCode().run()}
-          active={editor.isActive("code")}
-          title="Inline code"
-        >
-          <Code className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleCodeBlock().run()}
-          active={editor.isActive("codeBlock")}
-          title="Code block"
-        >
-          <Code2 className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleBlockquote().run()}
-          active={editor.isActive("blockquote")}
-          title="Quote"
-        >
-          <Quote className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleBulletList().run()}
-          active={editor.isActive("bulletList")}
-          title="Bullet list"
-        >
-          <List className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-        onClick={() => focusChain().toggleOrderedList().run()}
-          active={editor.isActive("orderedList")}
-          title="Numbered list"
-        >
-          <ListOrdered className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-          onClick={() => setShowLinkInput((prev) => !prev)}
-          active={editor.isActive("link")}
-          title="Insert link"
-        >
-          <LinkIcon className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton onClick={clearLink} title="Clear link">
-          <LinkIcon className="h-4 w-4 opacity-60" />
-        </ToggleButton>
-        <ToggleButton onClick={() => setShowImageInput((prev) => !prev)} title="Image URL">
-          <ImageIcon className="h-4 w-4" />
-        </ToggleButton>
-        <ToggleButton
-          onClick={() => {
-            setShowYoutubeInput((prev) => !prev);
-            setTimeout(() => youtubeInputRef.current?.focus(), 10);
-          }}
-          title="YouTube embed"
-        >
-          <Film className="h-4 w-4" />
-        </ToggleButton>
-        <input
-          type="color"
-          value={color}
-          onChange={(e) => {
-            setColor(e.target.value);
-            focusChain().setColor(e.target.value).run();
-          }}
-          className="h-8 w-8 rounded-md border border-border bg-transparent cursor-pointer"
-          title="Text color"
-        />
-        <Input
-          type="file"
-          accept="image/*"
-          className="h-9 w-44"
-          title="Upload image"
-          onChange={(e) => handleUpload(e.target.files?.[0] || null)}
-          disabled={isUploading}
-        />
-        {showLinkInput && (
-          <Input
-            ref={linkInputRef}
-            value={linkUrl}
-            onChange={(e) => setLinkUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") applyLink(linkUrl.trim());
-              if (e.key === "Escape") setShowLinkInput(false);
+      <div className="rounded-2xl border border-border bg-background shadow-sm">
+        <div className="sticky top-16 z-10 flex flex-wrap items-center gap-1 border-b border-border bg-background/95 px-3 py-2 backdrop-blur">
+          <ToggleButton
+            onClick={() => focusChain().undo().run()}
+            title="Undo"
+            disabled={!editor.can().undo()}
+          >
+            <Undo2 className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().redo().run()}
+            title="Redo"
+            disabled={!editor.can().redo()}
+          >
+            <Redo2 className="h-4 w-4" />
+          </ToggleButton>
+          <span className="h-5 w-px bg-border/70 mx-1" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "h-8 px-3 rounded-full text-sm font-semibold inline-flex items-center gap-2",
+                  headingLabel === "P"
+                    ? "text-foreground/80 hover:text-foreground hover:bg-muted/60"
+                    : "bg-primary/15 text-primary"
+                )}
+              >
+                {headingLabel}
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => focusChain().setParagraph().run()}>
+                Paragraph
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => focusChain().toggleHeading({ level: 1 }).run()}>
+                Heading 1
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => focusChain().toggleHeading({ level: 2 }).run()}>
+                Heading 2
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => focusChain().toggleHeading({ level: 3 }).run()}>
+                Heading 3
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => focusChain().toggleHeading({ level: 4 }).run()}>
+                Heading 4
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <span className="h-5 w-px bg-border/70 mx-1" />
+
+          <ToggleButton
+            onClick={() => focusChain().toggleBold().run()}
+            active={editor.isActive("bold")}
+            title="Bold"
+          >
+            <Bold className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleItalic().run()}
+            active={editor.isActive("italic")}
+            title="Italic"
+          >
+            <Italic className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleUnderline().run()}
+            active={editor.isActive("underline")}
+            title="Underline"
+          >
+            <Minus className="h-4 w-4 rotate-90" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleStrike().run()}
+            active={editor.isActive("strike")}
+            title="Strikethrough"
+          >
+            <Strikethrough className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleCode().run()}
+            active={editor.isActive("code")}
+            title="Inline code"
+          >
+            <Code className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleCodeBlock().run()}
+            active={editor.isActive("codeBlock")}
+            title="Code block"
+          >
+            <Code2 className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().toggleBlockquote().run()}
+            active={editor.isActive("blockquote")}
+            title="Quote"
+          >
+            <Quote className="h-4 w-4" />
+          </ToggleButton>
+
+          <span className="h-5 w-px bg-border/70 mx-1" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="h-8 px-2 rounded-full text-sm font-semibold text-foreground/80 hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-1"
+              >
+                <List className="h-4 w-4" />
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => focusChain().toggleBulletList().run()}>
+                <List className="h-4 w-4 mr-2" />
+                Bullet list
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => focusChain().toggleOrderedList().run()}>
+                <ListOrdered className="h-4 w-4 mr-2" />
+                Numbered list
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <span className="h-5 w-px bg-border/70 mx-1" />
+
+          <ToggleButton
+            onClick={() => focusChain().setTextAlign("left").run()}
+            active={editor.isActive({ textAlign: "left" })}
+            title="Align left"
+          >
+            <AlignLeft className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().setTextAlign("center").run()}
+            active={editor.isActive({ textAlign: "center" })}
+            title="Align center"
+          >
+            <AlignCenter className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().setTextAlign("right").run()}
+            active={editor.isActive({ textAlign: "right" })}
+            title="Align right"
+          >
+            <AlignRight className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton
+            onClick={() => focusChain().setTextAlign("justify").run()}
+            active={editor.isActive({ textAlign: "justify" })}
+            title="Justify"
+          >
+            <AlignJustify className="h-4 w-4" />
+          </ToggleButton>
+
+          <span className="h-5 w-px bg-border/70 mx-1" />
+
+          <ToggleButton
+            onClick={() => setShowLinkInput((prev) => !prev)}
+            active={editor.isActive("link")}
+            title="Insert link"
+          >
+            <LinkIcon className="h-4 w-4" />
+          </ToggleButton>
+          <ToggleButton onClick={clearLink} title="Clear link">
+            <LinkIcon className="h-4 w-4 opacity-60" />
+          </ToggleButton>
+
+          <span className="h-5 w-px bg-border mx-1" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="h-8 px-3 rounded-full text-sm font-semibold text-foreground/80 hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-2"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Add
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => setShowImageInput(true)}>
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Image URL
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload image
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setShowYoutubeInput(true);
+                  setTimeout(() => youtubeInputRef.current?.focus(), 10);
+                }}
+              >
+                <Film className="h-4 w-4 mr-2" />
+                YouTube embed
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => {
+              setColor(e.target.value);
+              focusChain().setColor(e.target.value).run();
             }}
-            onBlur={() => setShowLinkInput(false)}
-            placeholder="Paste link"
-            className="h-9 w-56"
+            className="h-8 w-8 rounded-full border border-border bg-transparent cursor-pointer"
+            title="Text color"
           />
-        )}
-        {showImageInput && (
-          <Input
-            ref={imageInputRef}
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") applyImageUrl(imageUrl.trim());
-              if (e.key === "Escape") setShowImageInput(false);
-            }}
-            onBlur={() => setShowImageInput(false)}
-            placeholder="Paste image URL"
-            className="h-9 w-56"
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleUpload(e.target.files?.[0] || null)}
+            disabled={isUploading}
           />
+        </div>
+
+        {(showLinkInput || showImageInput || showYoutubeInput) && (
+          <div className="border-b border-border bg-muted/20 px-3 py-2 flex flex-wrap gap-2">
+            {showLinkInput && (
+              <Input
+                ref={linkInputRef}
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyLink(linkUrl.trim());
+                  if (e.key === "Escape") setShowLinkInput(false);
+                }}
+                onBlur={() => setShowLinkInput(false)}
+                placeholder="Paste link"
+                className="h-9 w-64"
+              />
+            )}
+            {showImageInput && (
+              <Input
+                ref={imageInputRef}
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") applyImageUrl(imageUrl.trim());
+                  if (e.key === "Escape") setShowImageInput(false);
+                }}
+                onBlur={() => setShowImageInput(false)}
+                placeholder="Paste image URL"
+                className="h-9 w-64"
+              />
+            )}
+            {showYoutubeInput && (
+              <Input
+                ref={youtubeInputRef}
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") embedYoutube(youtubeUrl.trim());
+                  if (e.key === "Escape") setShowYoutubeInput(false);
+                }}
+                onBlur={() => setShowYoutubeInput(false)}
+                placeholder="Paste YouTube URL"
+                className="h-9 w-72"
+              />
+            )}
+          </div>
         )}
-        {showYoutubeInput && (
-          <Input
-            ref={youtubeInputRef}
-            value={youtubeUrl}
-            onChange={(e) => setYoutubeUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") embedYoutube(youtubeUrl.trim());
-              if (e.key === "Escape") setShowYoutubeInput(false);
-            }}
-            onBlur={() => setShowYoutubeInput(false)}
-            placeholder="Paste YouTube URL"
-            className="h-9 w-64"
-          />
-        )}
-      </div>
-      <div className="rounded-xl border border-border bg-background px-4 py-3">
-        <div
-          className={cn(
-            "rounded-lg bg-muted/30 px-3 py-2 transition focus-within:ring-2 focus-within:ring-primary/30",
-            isUploading ? "opacity-70" : ""
-          )}
-        >
-          <div className={cn("tiptap-editor min-h-[320px]", ARTICLE_PROSE_CLASSES)}>
+
+        <div className="px-5 py-6">
+          <div className={cn("tiptap-editor min-h-[360px]", ARTICLE_PROSE_CLASSES)}>
             <EditorContent editor={editor} />
           </div>
         </div>

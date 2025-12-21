@@ -5,7 +5,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
+import { fetchSiteSettings } from "@/data/siteSettings";
 
 export default function ResumePage() {
   const [resumeUrl, setResumeUrl] = useState<string>("");
@@ -18,6 +18,36 @@ export default function ResumePage() {
   const downloadLink = resumeUrl || "/resume.pdf";
   const isPdf = !!resumeUrl && /\.pdf($|\?)/i.test(resumeUrl);
 
+  const getFilenameFromUrl = (url: string) => {
+    try {
+      const { pathname } = new URL(url, window.location.href);
+      const name = pathname.split("/").pop();
+      if (!name) return "resume.pdf";
+      return name.includes(".") ? name : `${name}.pdf`;
+    } catch {
+      return "resume.pdf";
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!downloadLink) return;
+    try {
+      const response = await fetch(downloadLink);
+      if (!response.ok) throw new Error("Download failed");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = getFilenameFromUrl(downloadLink);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(downloadLink, "_blank", "noopener,noreferrer");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -26,10 +56,8 @@ export default function ResumePage() {
           <SectionHeader title="Resume" subtitle="Download my full resume or preview below" />
           
           <div className="flex gap-4 mb-8">
-            <Button asChild>
-              <a href={downloadLink} download>
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </a>
+            <Button type="button" onClick={handleDownload}>
+              <Download className="mr-2 h-4 w-4" /> Download PDF
             </Button>
           </div>
 
@@ -46,10 +74,8 @@ export default function ResumePage() {
                     <p className="text-muted-foreground">
                       Preview không hiển thị được. Nhấn tải xuống để xem PDF.
                     </p>
-                    <Button asChild>
-                      <a href={downloadLink} download>
-                        <Download className="mr-2 h-4 w-4" /> Download PDF
-                      </a>
+                    <Button type="button" onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> Download PDF
                     </Button>
                   </div>
                 </object>

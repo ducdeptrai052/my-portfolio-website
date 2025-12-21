@@ -222,32 +222,47 @@ export default function AdminBlogEditorPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto w-full">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/blog')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-serif font-medium flex-1">
-          {isNew ? 'New Post' : 'Edit Post'}
-        </h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/blog')}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-3xl font-serif font-medium">
+            {isNew ? 'New Post' : 'Edit Post'}
+          </h1>
+        </div>
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           {!isNew && (
-            <Button variant="outline" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(true)}
+              className="h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
+            >
+              <Trash2 className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Delete</span>
             </Button>
           )}
-          <Button variant="outline" onClick={() => handleSave('draft')} disabled={saving}>
+          <Button
+            variant="outline"
+            onClick={() => handleSave('draft')}
+            disabled={saving}
+            className="h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
+          >
             Save Draft
           </Button>
-          <Button onClick={() => handleSave('published')} disabled={saving}>
-            <Save className="h-4 w-4 mr-2" />
-            {saving ? 'Saving...' : 'Publish'}
+          <Button
+            onClick={() => handleSave('published')}
+            disabled={saving}
+            className="h-9 px-3 text-xs sm:h-10 sm:px-4 sm:text-sm"
+          >
+            <Save className="h-4 w-4 sm:mr-2" />
+            <span>{saving ? 'Saving...' : 'Publish'}</span>
           </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Content</CardTitle>
@@ -318,12 +333,13 @@ export default function AdminBlogEditorPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Status</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Post Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-6 lg:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Status</Label>
               <Select
                 value={post.status}
                 onValueChange={(value) => handleChange('status', value)}
@@ -336,14 +352,10 @@ export default function AdminBlogEditorPage() {
                   <SelectItem value="published">Published</SelectItem>
                 </SelectContent>
               </Select>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Category</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <div className="space-y-2">
+              <Label>Category</Label>
               <Select
                 value={post.category}
                 onValueChange={(value) => handleChange('category', value)}
@@ -356,34 +368,27 @@ export default function AdminBlogEditorPage() {
                   <SelectItem value="writing">Writing</SelectItem>
                 </SelectContent>
               </Select>
-            </CardContent>
-          </Card>
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Cover Image</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input
-                  value={post.coverImageUrl}
-                  onChange={(e) => handleChange('coverImageUrl', e.target.value)}
-                  placeholder="https://..."
+            <div className="space-y-2 lg:col-span-1">
+              <Label>Cover Image</Label>
+              <Input
+                value={post.coverImageUrl}
+                onChange={(e) => handleChange('coverImageUrl', e.target.value)}
+                placeholder="https://..."
+              />
+              {post.coverImageUrl && (
+                <img
+                  src={post.coverImageUrl}
+                  alt="Cover preview"
+                  className="mt-3 w-full aspect-video object-cover rounded-md border"
+                  loading="lazy"
+                  decoding="async"
                 />
-              </div>
-                {post.coverImageUrl && (
-                  <img
-                    src={post.coverImageUrl}
-                    alt="Cover preview"
-                    className="w-full aspect-video object-cover rounded-md border"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                )}
-            </CardContent>
-          </Card>
-        </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <ConfirmDialog

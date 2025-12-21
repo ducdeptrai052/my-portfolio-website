@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SectionHeader } from "@/components/SectionHeader";
@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { loadPosts, type Post } from "@/data/posts";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 9;
 
 export default function BlogPage() {
   const [search, setSearch] = useState("");
@@ -44,6 +44,17 @@ export default function BlogPage() {
     <div key={`post-skeleton-${i}`} className="h-72 rounded-xl border bg-muted animate-pulse" />
   ));
 
+  const handleSearch = useCallback((query: string) => {
+    setSearch(query);
+    setPage(1);
+  }, []);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages || 1);
+    }
+  }, [page, totalPages]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -52,7 +63,7 @@ export default function BlogPage() {
           <SectionHeader title="Blog" subtitle="My stories & ideas" className="mb-8" />
           
           <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <SearchBar placeholder="Search posts..." onSearch={(q) => { setSearch(q); setPage(1); }} className="max-w-md" />
+            <SearchBar placeholder="Search posts..." onSearch={handleSearch} className="max-w-md" />
             <Tabs value={category} onValueChange={(v) => { setCategory(v); setPage(1); }}>
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>

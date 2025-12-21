@@ -8,6 +8,7 @@ import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { Color } from "@tiptap/extension-color";
+import TextAlign from "@tiptap/extension-text-align";
 import { createLowlight } from "lowlight";
 import common from "highlight.js/lib/languages/javascript";
 import ts from "highlight.js/lib/languages/typescript";
@@ -33,7 +34,7 @@ lowlight.register("markdown", markdown);
 
 const baseExtensions = [
   StarterKit.configure({
-    heading: { levels: [2, 3] },
+    heading: { levels: [1, 2, 3, 4] },
     codeBlock: false,
     link: false,
     underline: false,
@@ -58,6 +59,9 @@ const baseExtensions = [
   }),
   CodeBlockLowlight.configure({
     lowlight,
+  }),
+  TextAlign.configure({
+    types: ["heading", "paragraph"],
   }),
 ];
 
@@ -93,6 +97,11 @@ export const ARTICLE_PROSE_CLASSES = [
   "dark:prose-invert",
   "max-w-none",
   "prose-headings:font-semibold",
+  "dark:prose-headings:text-white",
+  "dark:prose-p:text-white/90",
+  "dark:prose-li:text-white/85",
+  "dark:prose-strong:text-white",
+  "dark:prose-blockquote:text-white/80",
   "prose-h1:text-3xl",
   "md:prose-h1:text-4xl",
   "prose-h1:font-bold",
@@ -103,8 +112,13 @@ export const ARTICLE_PROSE_CLASSES = [
   "prose-h3:text-xl",
   "prose-h3:mt-6",
   "prose-h3:mb-2",
+  "prose-h4:text-lg",
+  "prose-h4:mt-5",
+  "prose-h4:mb-2",
   "prose-p:leading-[1.7]",
   "prose-p:mb-5",
+  "prose-p:text-base",
+  "prose-lead:text-base",
   "prose-ul:my-6",
   "prose-ol:my-6",
   "prose-ul:list-disc",
@@ -122,9 +136,11 @@ export const ARTICLE_PROSE_CLASSES = [
   "prose-blockquote:pl-4",
   "prose-blockquote:text-muted-foreground",
   "prose-a:text-primary",
+  "prose-a:font-medium",
+  "prose-a:underline",
+  "prose-a:decoration-primary/50",
   "prose-a:underline-offset-4",
-  "prose-a:no-underline",
-  "hover:prose-a:underline",
+  "hover:prose-a:decoration-primary",
   "prose-code:text-sm",
   "prose-code:font-mono",
   "prose-code:bg-muted",

@@ -80,6 +80,17 @@ export default function AdminBlogPage() {
       key: 'updatedAt',
       header: 'Updated',
     },
+    {
+      key: 'slug',
+      header: 'Public',
+      render: (item) => (
+        <Button asChild variant="ghost" size="sm">
+          <a href={`/blog/${item.slug}`} target="_blank" rel="noreferrer">
+            View
+          </a>
+        </Button>
+      ),
+    },
   ];
 
   return (
@@ -105,14 +116,55 @@ export default function AdminBlogPage() {
       {loading ? (
         <p className="text-muted-foreground">Loading posts...</p>
       ) : (
-        <DataTable
-          data={filteredPosts}
-          columns={columns}
-          searchKey="title"
-          searchPlaceholder="Search posts..."
-          onEdit={(item) => navigate(`/admin/blog/${item.id}/edit`)}
-          onDelete={(item) => setDeleteId(item.id)}
-        />
+        <>
+          <div className="space-y-3 md:hidden">
+            {filteredPosts.map((post) => (
+              <div key={post.id} className="rounded-lg border border-border bg-card p-4 space-y-3">
+                <div>
+                  <p className="font-medium">{post.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{post.excerpt}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline" className="capitalize">
+                    {post.category}
+                  </Badge>
+                  <Badge variant={post.status === 'published' ? 'default' : 'secondary'}>
+                    {post.status}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Updated {new Date(post.updatedAt).toLocaleDateString()}
+                </p>
+                <div className="flex gap-2">
+                  <Button asChild variant="ghost" size="sm">
+                    <a href={`/blog/${post.slug}`} target="_blank" rel="noreferrer">
+                      View
+                    </a>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate(`/admin/blog/${post.id}/edit`)}>
+                    Edit
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteId(post.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {filteredPosts.length === 0 && (
+              <p className="text-muted-foreground">No posts found.</p>
+            )}
+          </div>
+          <div className="hidden md:block">
+            <DataTable
+              data={filteredPosts}
+              columns={columns}
+              searchKey="title"
+              searchPlaceholder="Search posts..."
+              onEdit={(item) => navigate(`/admin/blog/${item.id}/edit`)}
+              onDelete={(item) => setDeleteId(item.id)}
+            />
+          </div>
+        </>
       )}
 
       <ConfirmDialog

@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -14,6 +14,7 @@ import rehypeHighlight from "rehype-highlight";
 import DOMPurify from "dompurify";
 import { ARTICLE_PROSE_CLASSES, getHtmlFromJson, parseJsonDoc } from "@/lib/editor";
 import { highlightCodeBlocks } from "@/lib/highlight";
+import type { JSONContent } from "@tiptap/core";
 
 type TocItem = {
   id: string;
@@ -53,14 +54,14 @@ const extractHeadingsFromMarkdown = (markdown: string): TocItem[] => {
   return items;
 };
 
-const extractHeadingsFromDoc = (doc: any): TocItem[] => {
+const extractHeadingsFromDoc = (doc: JSONContent | null): TocItem[] => {
   const items: TocItem[] = [];
   const counts = new Map<string, number>();
-  const walk = (node: any) => {
+  const walk = (node: JSONContent | undefined) => {
     if (!node) return;
     if (node.type === "heading" && (node.attrs?.level === 2 || node.attrs?.level === 3)) {
-      const text = (node.content || [])
-        .map((c: any) => (c.type === "text" ? c.text : ""))
+      const text = (node.content ?? [])
+        .map((child) => (child.type === "text" ? child.text ?? "" : ""))
         .join("")
         .trim();
       if (text) {
@@ -71,9 +72,7 @@ const extractHeadingsFromDoc = (doc: any): TocItem[] => {
         items.push({ id, text, level: node.attrs.level });
       }
     }
-    if (Array.isArray(node.content)) {
-      node.content.forEach(walk);
-    }
+    node.content?.forEach(walk);
   };
   walk(doc);
   return items;
@@ -87,6 +86,10 @@ const addIdsToHtml = (html: string, toc: TocItem[]) => {
   headings.forEach((heading, index) => {
     const item = toc[index];
     if (item) heading.id = item.id;
+  });
+  doc.querySelectorAll("a").forEach((link) => {
+    link.setAttribute("target", "_blank");
+    link.setAttribute("rel", "noopener noreferrer");
   });
   doc.querySelectorAll("img").forEach((img) => {
     img.setAttribute("loading", "lazy");
@@ -105,9 +108,10 @@ export default function BlogDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [heroError, setHeroError] = useState(false);
-  const [tocOffset, setTocOffset] = useState(0);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const tocRef = useRef<HTMLDivElement | null>(null);
   const relatedSkeletons = Array.from({ length: 3 }, (_, i) => (
     <div key={`related-skeleton-${i}`} className="h-48 rounded-xl border bg-muted animate-pulse" />
   ));
@@ -152,17 +156,79 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     const updateOffset = () => {
-      if (!contentRef.current || !titleRef.current) return;
+      if (!contentRef.current || !titleRef.current || !tocRef.current) return;
       const contentTop = contentRef.current.getBoundingClientRect().top;
       const titleTop = titleRef.current.getBoundingClientRect().top;
       const nextOffset = Math.max(0, Math.round(titleTop - contentTop));
-      setTocOffset(nextOffset);
+      tocRef.current.style.marginTop = `${nextOffset}px`;
     };
     updateOffset();
     window.addEventListener("resize", updateOffset);
     return () => window.removeEventListener("resize", updateOffset);
   }, [heroError, loading, post?.title]);
 
+  const formattedDate = post ? new Date(post.date).toLocaleDateString("en-US", {
+    year: "numeric", month: "long", day: "numeric",
+  }) : "";
+  const heroSrc = post?.coverImage || "";
+  const contentDoc = post ? parseJsonDoc(post.content) : null;
+  const jsonHtml = contentDoc ? getHtmlFromJson(contentDoc) : "";
+  const isHtmlContent = !!post && (jsonHtml ? true : /<\/?[a-z][\s\S]*>/i.test(post.content));
+  const tocItems = useMemo(() => {
+    if (!post) return [];
+    if (contentDoc) return extractHeadingsFromDoc(contentDoc);
+    if (isHtmlContent) return extractHeadingsFromMarkdown(post.content);
+    return extractHeadingsFromMarkdown(post.content);
+  }, [contentDoc, isHtmlContent, post]);
+  const sanitizedHtml = useMemo(() => {
+    if (!isHtmlContent) return "";
+    const html = jsonHtml || post?.content || "";
+    const cleaned = DOMPurify.sanitize(html, {
+      ADD_TAGS: ["iframe"],
+      ADD_ATTR: [
+        "allow",
+        "allowfullscreen",
+        "frameborder",
+        "scrolling",
+        "src",
+        "title",
+        "width",
+        "height",
+        "target",
+        "rel",
+      ],
+    });
+    return addIdsToHtml(cleaned, tocItems);
+  }, [isHtmlContent, jsonHtml, post?.content, tocItems]);
+
+  useEffect(() => {
+    if (!contentRef.current || tocItems.length === 0) return;
+    const headings = Array.from(contentRef.current.querySelectorAll("h2, h3")) as HTMLElement[];
+    if (headings.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.target instanceof HTMLElement) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      {
+        rootMargin: "-20% 0px -70% 0px",
+        threshold: 0,
+      }
+    );
+
+    headings.forEach((heading) => observer.observe(heading));
+    return () => observer.disconnect();
+  }, [tocItems, sanitizedHtml, loading]);
+
+  useEffect(() => {
+    if (!loading && post) {
+      highlightCodeBlocks(contentRef.current);
+    }
+  }, [loading, post, sanitizedHtml]);
 
   if (!loading && (!post || error)) {
     return (
@@ -178,40 +244,43 @@ export default function BlogDetailPage() {
     );
   }
 
-  const formattedDate = post ? new Date(post.date).toLocaleDateString("en-US", {
-    year: "numeric", month: "long", day: "numeric",
-  }) : "";
-  const heroSrc = post ? post.coverImage || (post as any).coverImageUrl || "" : "";
-  const contentDoc = post ? parseJsonDoc(post.content) : null;
-  const jsonHtml = contentDoc ? getHtmlFromJson(contentDoc) : "";
-  const isHtmlContent = !!post && (jsonHtml ? true : /<\/?[a-z][\s\S]*>/i.test(post.content));
-  const tocItems = useMemo(() => {
-    if (!post) return [];
-    if (contentDoc) return extractHeadingsFromDoc(contentDoc);
-    if (isHtmlContent) return extractHeadingsFromMarkdown(post.content);
-    return extractHeadingsFromMarkdown(post.content);
-  }, [contentDoc, isHtmlContent, post]);
-  const sanitizedHtml = useMemo(() => {
-    if (!isHtmlContent) return "";
-    const html = jsonHtml || post?.content || "";
-    const cleaned = DOMPurify.sanitize(html, {
-      ADD_TAGS: ["iframe"],
-      ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling", "src", "title", "width", "height"],
-    });
-    return addIdsToHtml(cleaned, tocItems);
-  }, [isHtmlContent, jsonHtml, post?.content, tocItems]);
-
-  useEffect(() => {
-    if (!loading && post) {
-      highlightCodeBlocks(contentRef.current);
-    }
-  }, [loading, post?.content, sanitizedHtml]);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <article className="pt-24 pb-24">
         <div className="container mx-auto px-4 lg:grid lg:grid-cols-[260px_minmax(0,720px)_260px] lg:gap-10">
+          {/* hiển thị cover image ở bài blog */}
+          {/* {!loading && post && (
+            <div className="lg:col-span-3">
+              {heroSrc && !heroError && (
+                <div className="flex justify-center mb-10">
+                  <img
+                    src={heroSrc}
+                    alt={post.title}
+                    className="w-full max-w-[900px] aspect-[2/1] object-cover rounded-2xl shadow-lg border border-border/40 bg-white/60 dark:bg-muted"
+                    onError={() => setHeroError(true)}
+                    onLoad={() => {
+                      if (contentRef.current && titleRef.current) {
+                        const contentTop = contentRef.current.getBoundingClientRect().top;
+                        const titleTop = titleRef.current.getBoundingClientRect().top;
+                        setTocOffset(Math.max(0, Math.round(titleTop - contentTop)));
+                      }
+                    }}
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                  />
+                </div>
+              )}
+              {(!heroSrc || heroError) && (
+                <div className="flex justify-center mb-10">
+                  <div className="w-full max-w-[900px] aspect-[2/1] rounded-2xl border border-dashed border-border/50 bg-muted flex items-center justify-center text-muted-foreground text-sm">
+                    No cover image
+                  </div>
+                </div>
+              )}
+            </div>
+          )} */}
           <div
             className="w-full max-w-3xl mx-auto lg:max-w-none lg:mx-0 lg:col-start-2 lg:col-end-3"
             ref={contentRef}
@@ -254,34 +323,6 @@ export default function BlogDetailPage() {
               </div>
             ) : post && (
               <>
-                {heroSrc && !heroError && (
-                  <div className="flex justify-center mb-10">
-                    <img
-                      src={heroSrc}
-                      alt={post.title}
-                      className="w-full max-w-[800px] aspect-[2/1] object-cover rounded-2xl shadow-lg border border-border/40 bg-white/60 dark:bg-muted"
-                      onError={() => setHeroError(true)}
-                      onLoad={() => {
-                        if (contentRef.current && titleRef.current) {
-                          const contentTop = contentRef.current.getBoundingClientRect().top;
-                          const titleTop = titleRef.current.getBoundingClientRect().top;
-                          setTocOffset(Math.max(0, Math.round(titleTop - contentTop)));
-                        }
-                      }}
-                      loading="eager"
-                      decoding="async"
-                      fetchPriority="high"
-                    />
-                  </div>
-                )}
-                {(!heroSrc || heroError) && (
-                  <div className="flex justify-center mb-10">
-                    <div className="w-full max-w-[840px] aspect-[2/1] rounded-2xl border border-dashed border-border/50 bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                      No cover image
-                    </div>
-                  </div>
-                )}
-
                 <article className="mx-auto w-full max-w-3xl px-4 lg:px-0">
                   <div className={ARTICLE_PROSE_CLASSES}>
                     <div className="not-prose flex flex-wrap items-center gap-4 mb-5 text-sm text-muted-foreground">
@@ -312,6 +353,9 @@ export default function BlogDetailPage() {
                             const id = slugify(text);
                             return <h3 id={id} {...props} />;
                           },
+                          a: ({ node: _node, ...props }) => (
+                            <a {...props} target="_blank" rel="noopener noreferrer" />
+                          ),
                           img: ({ node: _node, ...props }) => (
                             <img
                               {...props}
@@ -330,11 +374,11 @@ export default function BlogDetailPage() {
             )}
           </div>
           <aside className="hidden lg:block lg:col-start-3 lg:col-end-4">
-            <div className="sticky top-28 space-y-4" style={{ marginTop: tocOffset }}>
-              <p className="text-xs font-semibold uppercase tracking-widest text-primary dark:text-primary/80">
+            <div className="sticky top-28 space-y-4" ref={tocRef}>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Table Of Contents
               </p>
-              <nav className="space-y-2 text-sm rounded-2xl border border-border/70 bg-white/90 dark:bg-[#13161d] p-4 shadow-lg ring-1 ring-primary/10 dark:ring-primary/20">
+              <nav className="space-y-2 text-sm border-l-2 border-border/70 pl-4 max-h-[70vh] overflow-y-auto pr-2">
                 {tocItems.length === 0 && (
                   <p className="text-muted-foreground">No sections</p>
                 )}
@@ -343,7 +387,9 @@ export default function BlogDetailPage() {
                     key={item.id}
                     href={`#${item.id}`}
                     className={cn(
-                      "block rounded-md px-2 py-1 text-foreground/80 font-medium hover:text-foreground hover:bg-primary/10 dark:hover:bg-white/5 transition",
+                      "block rounded-md px-2 py-1 text-foreground/80 font-medium hover:text-foreground hover:bg-primary/10 transition dark:text-white/80 dark:hover:text-white dark:hover:bg-white/5",
+                      item.id === activeId &&
+                        "bg-primary/15 text-foreground dark:bg-white/10 dark:text-white font-semibold",
                       item.level === 3 ? "ml-3" : ""
                     )}
                   >
