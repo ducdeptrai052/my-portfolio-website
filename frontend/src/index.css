@@ -411,6 +411,34 @@
 }
 
 @layer components {
+  .article-prose {
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .article-prose pre,
+  .article-prose pre code {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .article-prose pre,
+  .article-prose table {
+    max-width: 100%;
+  }
+
+  .article-prose table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .article-prose img,
+  .article-prose iframe,
+  .article-prose video {
+    max-width: 100%;
+  }
+
   .article-prose iframe {
     width: 100%;
     max-width: 100%;
