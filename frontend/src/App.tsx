@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthGuard } from "@/components/admin/AuthGuard";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Analytics } from "@vercel/analytics/react";
+import { ScrollToTopButton } from "@/components/ScrollToTopButton";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
@@ -80,6 +81,7 @@ function App() {
           <Route path="*" element={<div>404 - Page not found</div>} />
         </Routes>
       </Suspense>
+      <ScrollToTopButton />
       <Toaster />
       <Analytics />
     </BrowserRouter>

@@ -63,7 +63,7 @@ export function Navbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border"
+          ? "bg-background/95 backdrop-blur-md shadow-sm border-b border-border dark:bg-black/70 dark:border-white/10 dark:shadow-[0_8px_24px_-16px_rgba(0,0,0,0.9)]"
           : "bg-transparent"
       )}
     >
@@ -72,7 +72,7 @@ export function Navbar() {
           {/* Logo */}
           <Link
             to="/"
-            className="font-serif text-xl font-semibold tracking-tight hover:text-accent transition-colors"
+            className="font-serif text-xl font-semibold tracking-tight hover:text-accent transition-colors dark:text-white"
           >
             {siteTitle}
           </Link>
@@ -86,8 +86,8 @@ export function Navbar() {
                 className={cn(
                   "text-sm font-medium transition-colors link-underline",
                   isActive(link.href)
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-foreground dark:text-white"
+                    : "text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white"
                 )}
               >
                 {link.label}

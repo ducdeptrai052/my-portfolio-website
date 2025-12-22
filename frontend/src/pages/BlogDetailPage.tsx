@@ -147,7 +147,8 @@ export default function BlogDetailPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const tocRef = useRef<HTMLDivElement | null>(null);
+  const backLinkRef = useRef<HTMLDivElement | null>(null);
+  const tocNavRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
   const relatedSkeletons = Array.from({ length: 3 }, (_, i) => (
     <div key={`related-skeleton-${i}`} className="h-48 rounded-xl border bg-muted animate-pulse" />
@@ -191,19 +192,6 @@ export default function BlogDetailPage() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [slug]);
 
-  useEffect(() => {
-    const updateOffset = () => {
-      if (!contentRef.current || !titleRef.current || !tocRef.current) return;
-      const contentTop = contentRef.current.getBoundingClientRect().top;
-      const titleTop = titleRef.current.getBoundingClientRect().top;
-      const nextOffset = Math.max(0, Math.round(titleTop - contentTop));
-      tocRef.current.style.marginTop = `${nextOffset}px`;
-    };
-    updateOffset();
-    window.addEventListener("resize", updateOffset);
-    return () => window.removeEventListener("resize", updateOffset);
-  }, [heroError, loading, post?.title]);
-
   const formattedDate = post ? new Date(post.date).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   }) : "";
@@ -240,26 +228,63 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     if (!contentRef.current || tocItems.length === 0) return;
-    const headings = Array.from(contentRef.current.querySelectorAll("h2, h3")) as HTMLElement[];
+    const headings = Array.from(contentRef.current.querySelectorAll<HTMLElement>("h2, h3"));
     if (headings.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.target instanceof HTMLElement) {
-            setActiveId(entry.target.id);
-          }
-        });
-      },
-      {
-        rootMargin: "-20% 0px -70% 0px",
-        threshold: 0,
-      }
-    );
+    const topOffset = 120;
+    let ticking = false;
 
-    headings.forEach((heading) => observer.observe(heading));
-    return () => observer.disconnect();
+    const updateActive = () => {
+      let nextActive: string | null = null;
+      headings.forEach((heading) => {
+        const top = heading.getBoundingClientRect().top;
+        if (top <= topOffset) {
+          nextActive = heading.id;
+        }
+      });
+
+      if (!nextActive && headings.length > 0) {
+        nextActive = headings[0].id;
+      }
+
+      if (nextActive) {
+        setActiveId(nextActive);
+      }
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        updateActive();
+        ticking = false;
+      });
+    };
+
+    updateActive();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, [tocItems, sanitizedHtml, loading]);
+
+  useEffect(() => {
+    if (!activeId || !tocNavRef.current) return;
+    const nav = tocNavRef.current;
+    const activeLink = nav.querySelector<HTMLAnchorElement>(`a[href="#${activeId}"]`);
+    if (!activeLink) return;
+    const navRect = nav.getBoundingClientRect();
+    const linkRect = activeLink.getBoundingClientRect();
+    const offsetTop = linkRect.top - navRect.top;
+    const offsetBottom = linkRect.bottom - navRect.bottom;
+    if (offsetTop < 0) {
+      nav.scrollTop += offsetTop - 8;
+    } else if (offsetBottom > 0) {
+      nav.scrollTop += offsetBottom + 8;
+    }
+  }, [activeId]);
 
   useEffect(() => {
     if (!loading && post) {
@@ -344,10 +369,10 @@ export default function BlogDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <article className="pt-24 pb-24">
-        <div className="container mx-auto px-4 lg:grid lg:grid-cols-[260px_minmax(0,720px)_260px] lg:gap-10">
+        <div className="container mx-auto px-4 overflow-visible lg:grid lg:grid-cols-[260px_minmax(0,720px)_260px] lg:gap-10">
           {/* hiển thị cover image ở bài blog */}
           {/* {!loading && post && (
             <div className="lg:col-span-3">
@@ -384,9 +409,11 @@ export default function BlogDetailPage() {
             className="w-full max-w-3xl mx-auto lg:max-w-none lg:mx-0 lg:col-start-2 lg:col-end-3"
             ref={contentRef}
           >
-            <Button variant="ghost" asChild className="mb-10">
-              <Link to="/blog"><ArrowLeft className="mr-2 h-4 w-4" /> Back to blog</Link>
-            </Button>
+            <div ref={backLinkRef} className="mb-10">
+              <Button variant="ghost" asChild>
+                <Link to="/blog"><ArrowLeft className="mr-2 h-4 w-4" /> Back to blog</Link>
+              </Button>
+            </div>
 
             <div className="lg:hidden mb-8">
               <details className="rounded-2xl border border-border/60 bg-white/80 dark:bg-card/80 p-4 shadow-sm">
@@ -482,12 +509,15 @@ export default function BlogDetailPage() {
               </>
             )}
           </div>
-          <aside className="hidden lg:block lg:col-start-3 lg:col-end-4">
-            <div className="sticky top-28 space-y-4" ref={tocRef}>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          <aside className="hidden lg:block lg:col-start-3 lg:col-end-4 lg:self-start toc-sticky">
+            <div className="space-y-4 h-fit rounded-xl border border-border/60 bg-card/70 p-4 shadow-sm dark:border-white/10 dark:bg-white/5 dark:shadow-[0_12px_30px_-18px_rgba(0,0,0,0.85)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground text-center dark:text-white/70">
                 Table Of Contents
               </p>
-              <nav className="space-y-2 text-sm border-l-2 border-border/70 pl-4 max-h-[70vh] overflow-y-auto pr-2">
+              <nav
+                ref={tocNavRef}
+                className="space-y-2 text-sm max-h-[45vh] overflow-y-auto pr-2 scroll-smooth"
+              >
                 {tocItems.length === 0 && (
                   <p className="text-muted-foreground">No sections</p>
                 )}
@@ -496,9 +526,9 @@ export default function BlogDetailPage() {
                     key={item.id}
                     href={`#${item.id}`}
                     className={cn(
-                      "block rounded-md px-2 py-1 text-foreground/80 font-medium hover:text-foreground hover:bg-primary/10 transition dark:text-white/80 dark:hover:text-white dark:hover:bg-white/5",
+                      "block rounded-md px-2 py-1 text-foreground/80 font-medium hover:text-foreground hover:bg-primary/10 transition dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10",
                       item.id === activeId &&
-                        "bg-primary/15 text-foreground dark:bg-white/10 dark:text-white font-semibold",
+                        "bg-primary/20 text-foreground dark:bg-white/15 dark:text-white font-semibold dark:ring-1 dark:ring-white/10",
                       item.level === 3 ? "ml-3" : ""
                     )}
                   >

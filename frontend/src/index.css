@@ -175,6 +175,11 @@
   color: #065f46;
 }
 
+.toc-sticky {
+  position: sticky;
+  top: 6rem;
+}
+
 .dark .code-copy-button {
   border-color: rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
@@ -442,7 +447,7 @@ html {
   }
   
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
     font-family: var(--font-sans);
   }
   

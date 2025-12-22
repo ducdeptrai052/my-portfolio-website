@@ -56,7 +56,7 @@ export default function BlogPage() {
   }, [page, totalPages]);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <main className="pt-24 pb-16 px-4">
         <div className="container mx-auto">
