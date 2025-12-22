@@ -1,7 +1,5 @@
 import { generateHTML, generateText, type JSONContent } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
-import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
@@ -36,17 +34,15 @@ const baseExtensions = [
   StarterKit.configure({
     heading: { levels: [1, 2, 3, 4] },
     codeBlock: false,
-    link: false,
-    underline: false,
+    link: {
+      openOnClick: false,
+      autolink: true,
+      linkOnPaste: true,
+    },
+    underline: {},
   }),
-  Underline,
   TextStyle,
   Color,
-  Link.configure({
-    openOnClick: false,
-    autolink: true,
-    linkOnPaste: true,
-  }),
   Image.configure({
     inline: false,
     allowBase64: true,
