@@ -112,13 +112,28 @@ export default function HomePage() {
             {settings.heroIntro}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="hero" size="lg" asChild>
+            <Button
+              variant="hero"
+              size="lg"
+              asChild
+              className="liquid-glass-hover hover:text-foreground dark:hover:text-white"
+            >
               <Link to="/projects">View Projects</Link>
             </Button>
-            <Button variant="hero-outline" size="lg" asChild>
+            <Button
+              variant="hero-outline"
+              size="lg"
+              asChild
+              className="liquid-glass-hover hover:text-foreground dark:hover:text-white"
+            >
               <Link to="/blog">Read Blog</Link>
             </Button>
-            <Button variant="ghost" size="lg" asChild>
+            <Button
+              variant="ghost"
+              size="lg"
+              asChild
+              className="liquid-glass-hover hover:text-foreground dark:hover:text-white"
+            >
               <Link to="/contact">Contact <ArrowRight className="ml-2 h-4 w-4" /></Link>
             </Button>
           </div>

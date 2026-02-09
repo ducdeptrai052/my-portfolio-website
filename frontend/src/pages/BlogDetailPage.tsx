@@ -1,11 +1,12 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, X, Copy } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BlogCard } from "@/components/BlogCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { loadPosts, type Post } from "@/data/posts";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,7 @@ import DOMPurify from "dompurify";
 import { ARTICLE_PROSE_CLASSES, getHtmlFromJson, parseJsonDoc } from "@/lib/editor";
 import { highlightCodeBlocks } from "@/lib/highlight";
 import type { JSONContent } from "@tiptap/core";
+import { FaLinkedinIn, FaFacebookF, FaXTwitter, FaRedditAlien } from "react-icons/fa6";
 
 type TocItem = {
   id: string;
@@ -145,6 +147,8 @@ export default function BlogDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [heroError, setHeroError] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const contentRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const backLinkRef = useRef<HTMLDivElement | null>(null);
@@ -335,24 +339,48 @@ export default function BlogDetailPage() {
     });
   }, [post]);
 
-  const handleShare = async () => {
+  const openShare = () => {
     if (!post) return;
-    const shareUrl = window.location.href;
+    const url = window.location.href;
+    setShareUrl(url);
+    setShareOpen(true);
+  };
+
+  useEffect(() => {
+    if (!shareOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setShareOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [shareOpen]);
+
+  const handleCopyShare = async () => {
+    if (!shareUrl) return;
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: post.title,
-          text: post.excerpt,
-          url: shareUrl,
-        });
-        return;
-      }
       await navigator.clipboard.writeText(shareUrl);
       toast({ title: "Link copied", description: "Share link copied to clipboard." });
     } catch {
-      toast({ title: "Share failed", description: "Could not share this post.", variant: "destructive" });
+      toast({ title: "Copy failed", description: "Could not copy the link.", variant: "destructive" });
     }
   };
+
+  const shareLinks = useMemo(() => {
+    if (!shareUrl || !post) return null;
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(post.title || "");
+    return {
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      x: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+      reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+    };
+  }, [post, shareUrl]);
 
   if (!loading && (!post || error)) {
     return (
@@ -371,6 +399,102 @@ export default function BlogDetailPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
+      {shareOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-2xl rounded-3xl bg-white text-white shadow-2xl dark:bg-neutral-900">
+              <div className="flex items-start justify-between px-6 pt-6 pb-3 text-black dark:text-white">
+              <div>
+                <h3 className="text-xl font-semibold">Shareable public link</h3>
+                <p className="text-sm text-black/60 dark:text-white/75">Share this blog post anywhere.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShareOpen(false)}
+                className="rounded-full p-2 text-black/60 hover:bg-black/5 hover:text-black dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              </div>
+
+              <div className="px-6 pb-6 space-y-4">
+              <div className="flex flex-col gap-3 rounded-2xl bg-black/5 p-4 sm:flex-row sm:items-center dark:bg-white/10">
+                <Input
+                  readOnly
+                  value={shareUrl}
+                  className="border-black/10 bg-white text-black placeholder:text-black/40 dark:border-white/20 dark:bg-white/10 dark:text-white dark:placeholder:text-white/50"
+                />
+                <Button
+                  type="button"
+                  onClick={handleCopyShare}
+                  className="sm:shrink-0 bg-black text-white hover:bg-black/85 dark:bg-white dark:text-black dark:hover:bg-white/90"
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copy link
+                </Button>
+              </div>
+
+                <div className="flex items-start gap-2 text-xs text-black/60 dark:text-white/70">
+                  <span className="mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full border border-black/30 text-[10px] dark:border-white/50">i</span>
+                  <p>Public links can be reshared. Share responsibly.</p>
+                </div>
+
+                {shareLinks && (
+                  <div className="flex flex-wrap justify-center gap-6 pt-2 text-center">
+                    <a
+                      href={shareLinks.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
+                    >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2]/15 text-xl text-[#0A66C2] shadow-[0_10px_25px_rgba(10,102,194,0.25)]">
+                        <FaLinkedinIn />
+                      </span>
+                      Linkedin
+                    </a>
+                    <a
+                      href={shareLinks.facebook}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
+                    >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877F2]/15 text-xl text-[#1877F2] shadow-[0_10px_25px_rgba(24,119,242,0.25)]">
+                        <FaFacebookF />
+                      </span>
+                      Facebook
+                    </a>
+                    <a
+                      href={shareLinks.x}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
+                    >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/5 text-xl text-black shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:bg-white/15 dark:text-white dark:shadow-[0_10px_25px_rgba(255,255,255,0.15)]">
+                        <FaXTwitter />
+                      </span>
+                      X
+                    </a>
+                    <a
+                      href={shareLinks.reddit}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
+                    >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF4500]/15 text-xl text-[#FF4500] shadow-[0_10px_25px_rgba(255,69,0,0.25)]">
+                        <FaRedditAlien />
+                      </span>
+                      Reddit
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+        </div>
+      )}
       <article className="pt-24 pb-24">
         <div className="container mx-auto px-4 overflow-visible lg:grid lg:grid-cols-[260px_minmax(0,720px)_260px] lg:gap-10">
           {/* hiển thị cover image ở bài blog */}
@@ -460,7 +584,7 @@ export default function BlogDetailPage() {
                         variant="outline"
                         size="sm"
                         className="ml-auto text-xs"
-                        onClick={handleShare}
+                        onClick={openShare}
                       >
                         <Share2 className="mr-2 h-3.5 w-3.5" />
                         Share
@@ -506,6 +630,41 @@ export default function BlogDetailPage() {
                     )}
                   </div>
                 </article>
+                <div className="mx-auto mt-12 w-full max-w-3xl px-4 lg:px-0">
+                  <div className="cta-glass px-6 py-6">
+                    <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="max-w-xl">
+                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground dark:text-white/70">
+                          Let's build something
+                        </p>
+                        <h3 className="mt-2 text-2xl font-serif text-foreground dark:text-white">
+                          I design and build reliable systems & APIs.
+                        </h3>
+                        <p className="mt-2 text-sm text-muted-foreground dark:text-white/70">
+                          Want to collaborate or learn more about my work? Get in touch or download my resume.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          variant="hero"
+                          size="lg"
+                          asChild
+                          className="liquid-glass-hover shadow-lg shadow-accent/30 dark:shadow-primary/25 hover:text-foreground dark:hover:text-white"
+                        >
+                          <Link to="/contact">Contact</Link>
+                        </Button>
+                        <Button
+                          variant="hero-outline"
+                          size="lg"
+                          asChild
+                          className="liquid-glass-hover shadow-lg shadow-primary/20 dark:shadow-primary/25 hover:text-foreground dark:hover:text-white"
+                        >
+                          <Link to="/resume">View Resume</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </>
             )}
           </div>

@@ -562,6 +562,185 @@ html {
   .terminal-text {
     color: hsl(var(--terminal-text));
   }
+
+  .nav-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    transition: all 0.25s ease;
+  }
+
+  .nav-pill::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.75),
+      rgba(255, 255, 255, 0.25)
+    );
+    box-shadow:
+      0 12px 28px rgba(0, 0, 0, 0.12),
+      inset 0 1px 1px rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    opacity: 0;
+    transform: scale(0.96);
+    transition: all 0.25s ease;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+
+  .dark .nav-pill::before {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.05)
+    );
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 12px 24px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-pill:hover::before,
+  .nav-pill-active::before {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .nav-pill-active {
+    color: hsl(var(--foreground));
+  }
+
+  .nav-pill > span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .liquid-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.12)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.12),
+      inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+
+  .dark .liquid-glass {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.05)
+    );
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  }
+
+  .liquid-glass:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.45),
+      rgba(255, 255, 255, 0.18)
+    );
+    border-color: rgba(255, 255, 255, 0.55);
+  }
+
+  .dark .liquid-glass:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.24),
+      rgba(255, 255, 255, 0.1)
+    );
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .liquid-glass-hover:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.35),
+      rgba(255, 255, 255, 0.12)
+    ) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, 0.12),
+      inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+
+  .dark .liquid-glass-hover:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.05)
+    ) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.35),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .cta-glass {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.75), rgba(255,255,255,0.25));
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow:
+      0 22px 55px -28px rgba(0,0,0,0.5),
+      inset 0 1px 1px rgba(255,255,255,0.5);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+  }
+
+  .cta-glass::before,
+  .cta-glass::after {
+    content: "";
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(38px);
+    opacity: 0.45;
+  }
+
+  .cta-glass::before {
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 124, 76, 0.35);
+    top: -40px;
+    left: -50px;
+  }
+
+  .cta-glass::after {
+    width: 140px;
+    height: 140px;
+    background: rgba(59, 130, 246, 0.35);
+    bottom: -30px;
+    right: -10px;
+  }
+
+  .dark .cta-glass {
+    background: linear-gradient(135deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow:
+      0 25px 60px -30px rgba(0,0,0,0.75),
+      inset 0 1px 1px rgba(255,255,255,0.22);
+  }
+
+  .cta-glass::before,
+  .cta-glass::after {
+    pointer-events: none;
+  }
 }
 
 @keyframes fadeIn {

@@ -32,7 +32,7 @@ export function ScrollToTopButton() {
         type="button"
         size="icon"
         variant="outline"
-        className="rounded-full shadow-md backdrop-blur"
+        className="rounded-full shadow-md liquid-glass-hover"
         onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })}
         aria-label="Scroll to top"
       >

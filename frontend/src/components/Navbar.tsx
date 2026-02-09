@@ -78,19 +78,19 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-3">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
                 className={cn(
-                  "text-sm font-medium transition-colors link-underline",
+                  "text-sm font-medium transition-colors nav-pill",
                   isActive(link.href)
-                    ? "text-foreground dark:text-white"
+                    ? "text-foreground dark:text-white nav-pill-active"
                     : "text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white"
                 )}
               >
-                {link.label}
+                <span>{link.label}</span>
               </Link>
             ))}
           </div>
@@ -102,6 +102,7 @@ export function Navbar() {
               size="icon"
               onClick={toggleTheme}
               aria-label="Toggle theme"
+              className="liquid-glass"
             >
               {isDark ? (
                 <Sun className="h-5 w-5" />
