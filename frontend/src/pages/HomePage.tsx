@@ -55,23 +55,51 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    loadPosts()
-      .then((data) => {
-        setPosts(data);
-        setPostsError(null);
-      })
-      .catch((err: Error) => setPostsError(err?.message || "Failed to load posts"))
-      .finally(() => setPostsLoading(false));
+    const schedule = (fn: () => void) => {
+      if (typeof window === "undefined") return fn();
+      if ("requestIdleCallback" in window) {
+        (window as typeof window & { requestIdleCallback?: IdleRequestCallback }).requestIdleCallback(
+          () => fn(),
+          { timeout: 1200 }
+        );
+      } else {
+        setTimeout(fn, 200);
+      }
+    };
+
+    schedule(() => {
+      loadPosts()
+        .then((data) => {
+          setPosts(data);
+          setPostsError(null);
+        })
+        .catch((err: Error) => setPostsError(err?.message || "Failed to load posts"))
+        .finally(() => setPostsLoading(false));
+    });
   }, []);
 
   useEffect(() => {
-    getTopRepos(4)
-      .then((data) => {
-        setRepos(data);
-        setReposError(null);
-      })
-      .catch((err: Error) => setReposError(err?.message || "Failed to load repositories"))
-      .finally(() => setReposLoading(false));
+    const schedule = (fn: () => void) => {
+      if (typeof window === "undefined") return fn();
+      if ("requestIdleCallback" in window) {
+        (window as typeof window & { requestIdleCallback?: IdleRequestCallback }).requestIdleCallback(
+          () => fn(),
+          { timeout: 1600 }
+        );
+      } else {
+        setTimeout(fn, 250);
+      }
+    };
+
+    schedule(() => {
+      getTopRepos(4)
+        .then((data) => {
+          setRepos(data);
+          setReposError(null);
+        })
+        .catch((err: Error) => setReposError(err?.message || "Failed to load repositories"))
+        .finally(() => setReposLoading(false));
+    });
   }, []);
 
   const featuredProjects = getFeaturedProjects(projects).slice(0, 3);
@@ -105,12 +133,21 @@ export default function HomePage() {
               {/* {settings.siteTitle || "Portfolio"} */}
             </h1>
           </div>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-            {settings.tagline}
-          </p>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            {settings.heroIntro}
-          </p>
+          {settingsLoaded ? (
+            <>
+              <p className="text-xl md:text-2xl text-muted-foreground mb-4">
+                {settings.tagline}
+              </p>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+                {settings.heroIntro}
+              </p>
+            </>
+          ) : (
+            <div className="w-full flex flex-col items-center gap-3 mb-8 animate-pulse">
+              <div className="h-6 w-64 bg-muted rounded" />
+              <div className="h-5 w-80 bg-muted rounded" />
+            </div>
+          )}
           <div className="flex flex-wrap justify-center gap-4">
             <Button
               variant="hero"

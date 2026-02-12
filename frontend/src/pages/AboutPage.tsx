@@ -52,17 +52,21 @@ export default function AboutPage() {
               about.avatarUrl ? (
                 <img
                   src={about.avatarUrl}
-                  alt={settings.siteTitle}
-                  className="w-40 h-40 rounded-full object-cover border"
+                  srcSet={`${about.avatarUrl} 2x`}
+                  sizes="(max-width: 768px) 160px, 200px"
+                  alt={settings.siteTitle || "Avatar"}
+                  width={200}
+                  height={250}
+                  className="w-40 aspect-[4/5] rounded-2xl object-cover border shadow-sm"
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
                 />
               ) : (
-                <div className="w-40 h-40 rounded-full bg-muted border" />
+                <div className="w-40 h-52 rounded-xl bg-muted border shadow-sm" />
               )
             ) : (
-              <div className="w-40 h-40 rounded-full bg-muted animate-pulse border" />
+              <div className="w-40 h-52 rounded-xl bg-muted animate-pulse border shadow-sm" />
             )}
             <div>
               {/* <h1 className="font-serif text-4xl font-medium mb-2">{settings.siteTitle}</h1> */}

@@ -10,7 +10,6 @@ export interface Post {
 }
 
 import { fetchPostsPublic } from "./adminPosts";
-import { getTextFromJson, parseJsonDoc } from "@/lib/editor";
 
 export const posts: Post[] = [];
 
@@ -28,10 +27,29 @@ type PostApi = {
 let cachedPosts: Post[] | null = null;
 let inflight: Promise<Post[]> | null = null;
 
+type EditorNode = {
+  text?: string;
+  content?: EditorNode[];
+};
+
+const extractText = (node: EditorNode | EditorNode[] | null): string => {
+  if (!node) return "";
+  if (Array.isArray(node)) return node.map(extractText).join(" ");
+  const parts: string[] = [];
+  if (node.text) parts.push(node.text);
+  if (node.content) parts.push(extractText(node.content));
+  return parts.join(" ");
+};
+
 const computeReadTime = (content: string) => {
-  const doc = parseJsonDoc(content);
-  const text = doc ? getTextFromJson(doc) : content;
-  const words = text?.split(/\s+/).filter(Boolean).length || 0;
+  let text = content || "";
+  try {
+    const parsed = JSON.parse(content) as EditorNode | { content?: EditorNode[] };
+    text = extractText(Array.isArray(parsed) ? parsed : parsed?.content ?? parsed) || text;
+  } catch {
+    // fall back to raw content when JSON parse fails
+  }
+  const words = text.split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.ceil(words / 200));
   return `${minutes} min read`;
 };

@@ -10,6 +10,8 @@ import { setPageMeta } from "@/lib/seo";
 
 export default function ResumePage() {
   const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [allowInlinePreview, setAllowInlinePreview] = useState(false);
+
   useEffect(() => {
     fetchSiteSettings(true)
       .then((data) => setResumeUrl(data.resumeUrl || ""))
@@ -25,6 +27,16 @@ export default function ResumePage() {
 
   const downloadLink = resumeUrl || "/resume.pdf";
   const isPdf = !!resumeUrl && /\.pdf($|\?)/i.test(resumeUrl);
+  const isMobile = typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false;
+
+  useEffect(() => {
+    if (!isPdf) return;
+    // On mobile or slow connections we defer inline PDF rendering until user opts in.
+    const connection = (navigator as any)?.connection?.effectiveType;
+    const slow = connection === "slow-2g" || connection === "2g";
+    const autoPreview = !isMobile && !slow;
+    setAllowInlinePreview(autoPreview);
+  }, [isMobile, isPdf]);
 
   const getFilenameFromUrl = (url: string) => {
     try {
@@ -67,26 +79,47 @@ export default function ResumePage() {
             <Button type="button" onClick={handleDownload}>
               <Download className="mr-2 h-4 w-4" /> Download PDF
             </Button>
+            {isPdf && !allowInlinePreview && (
+              <Button variant="outline" type="button" onClick={() => setAllowInlinePreview(true)}>
+                <FileText className="mr-2 h-4 w-4" /> Xem trước
+              </Button>
+            )}
           </div>
 
           <Card className="p-8 bg-muted/30">
             {resumeUrl ? (
               isPdf ? (
-                <object
-                  data={resumeUrl}
-                  type="application/pdf"
-                  className="w-full min-h-[70vh] rounded-md border"
-                >
-                  <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+                allowInlinePreview ? (
+                  <iframe
+                    src={resumeUrl}
+                    title="Resume preview"
+                    className="w-full min-h-[70vh] rounded-md border bg-background"
+                    loading="lazy"
+                  >
+                    <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+                      <FileText className="h-16 w-16 text-muted-foreground" />
+                      <p className="text-muted-foreground">
+                        Preview không hiển thị được. Nhấn tải xuống để xem PDF.
+                      </p>
+                      <Button type="button" onClick={handleDownload}>
+                        <Download className="mr-2 h-4 w-4" /> Download PDF
+                      </Button>
+                    </div>
+                  </iframe>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
                     <FileText className="h-16 w-16 text-muted-foreground" />
-                    <p className="text-muted-foreground">
-                      Preview không hiển thị được. Nhấn tải xuống để xem PDF.
+                    <p className="text-muted-foreground max-w-md">
+                      Để tiết kiệm băng thông trên thiết bị di động, xem trước PDF chỉ tải khi bạn yêu cầu.
                     </p>
-                    <Button type="button" onClick={handleDownload}>
-                      <Download className="mr-2 h-4 w-4" /> Download PDF
+                    <Button type="button" onClick={() => setAllowInlinePreview(true)}>
+                      <FileText className="mr-2 h-4 w-4" /> Xem trước PDF
+                    </Button>
+                    <Button variant="outline" type="button" onClick={handleDownload}>
+                      <Download className="mr-2 h-4 w-4" /> Tải xuống luôn
                     </Button>
                   </div>
-                </object>
+                )
               ) : (
                 <div className="flex items-center justify-center">
                   <img

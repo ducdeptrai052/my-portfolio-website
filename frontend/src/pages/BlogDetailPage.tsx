@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Calendar, Clock, Share2, X, Copy } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, X, Copy, Linkedin, Facebook, Twitter, MessageCircle } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BlogCard } from "@/components/BlogCard";
@@ -17,7 +17,6 @@ import DOMPurify from "dompurify";
 import { ARTICLE_PROSE_CLASSES, getHtmlFromJson, parseJsonDoc } from "@/lib/editor";
 import { highlightCodeBlocks } from "@/lib/highlight";
 import type { JSONContent } from "@tiptap/core";
-import { FaLinkedinIn, FaFacebookF, FaXTwitter, FaRedditAlien } from "react-icons/fa6";
 
 type TocItem = {
   id: string;
@@ -452,7 +451,7 @@ export default function BlogDetailPage() {
                       className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
                     >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2]/15 text-xl text-[#0A66C2] shadow-[0_10px_25px_rgba(10,102,194,0.25)]">
-                        <FaLinkedinIn />
+                        <Linkedin className="h-5 w-5" />
                       </span>
                       Linkedin
                     </a>
@@ -463,7 +462,7 @@ export default function BlogDetailPage() {
                       className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
                     >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877F2]/15 text-xl text-[#1877F2] shadow-[0_10px_25px_rgba(24,119,242,0.25)]">
-                        <FaFacebookF />
+                        <Facebook className="h-5 w-5" />
                       </span>
                       Facebook
                     </a>
@@ -474,7 +473,7 @@ export default function BlogDetailPage() {
                       className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
                     >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/5 text-xl text-black shadow-[0_10px_25px_rgba(0,0,0,0.08)] dark:bg-white/15 dark:text-white dark:shadow-[0_10px_25px_rgba(255,255,255,0.15)]">
-                        <FaXTwitter />
+                        <Twitter className="h-5 w-5" />
                       </span>
                       X
                     </a>
@@ -485,7 +484,7 @@ export default function BlogDetailPage() {
                       className="flex w-24 flex-col items-center gap-2 text-xs text-white/70 hover:text-white"
                     >
                     <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FF4500]/15 text-xl text-[#FF4500] shadow-[0_10px_25px_rgba(255,69,0,0.25)]">
-                        <FaRedditAlien />
+                        <MessageCircle className="h-5 w-5" />
                       </span>
                       Reddit
                     </a>
