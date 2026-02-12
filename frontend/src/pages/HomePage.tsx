@@ -133,21 +133,12 @@ export default function HomePage() {
               {/* {settings.siteTitle || "Portfolio"} */}
             </h1>
           </div>
-          {settingsLoaded ? (
-            <>
-              <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-                {settings.tagline}
-              </p>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-                {settings.heroIntro}
-              </p>
-            </>
-          ) : (
-            <div className="w-full flex flex-col items-center gap-3 mb-8 animate-pulse">
-              <div className="h-6 w-64 bg-muted rounded" />
-              <div className="h-5 w-80 bg-muted rounded" />
-            </div>
-          )}
+          <p className="text-xl md:text-2xl text-muted-foreground mb-4">
+            Backend Developer & Automation
+          </p>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+            I build beautiful, scalable web applications with modern technologies.
+          </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button
               variant="hero"
