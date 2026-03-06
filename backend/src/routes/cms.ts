@@ -5,6 +5,36 @@ import { sendError, sendOk } from "../utils/response";
 
 const router = express.Router();
 
+const parseCertificateInput = (data: any) => {
+  const year = Number(data?.year);
+
+  return {
+    title: String(data?.title ?? "").trim(),
+    issuer: String(data?.issuer ?? "").trim(),
+    platform: String(data?.platform ?? "").trim(),
+    logoUrl: data?.logoUrl ? String(data.logoUrl).trim() : null,
+    year: Number.isFinite(year) ? Math.trunc(year) : NaN,
+    verifyUrl: String(data?.verifyUrl ?? "").trim(),
+    featured: Boolean(data?.featured),
+  };
+};
+
+const validateCertificateInput = (payload: ReturnType<typeof parseCertificateInput>) => {
+  const missingFields: string[] = [];
+  const invalidFields: string[] = [];
+
+  if (!payload.title) missingFields.push("title");
+  if (!payload.issuer) missingFields.push("issuer");
+  if (!payload.platform) missingFields.push("platform");
+  if (!payload.verifyUrl) missingFields.push("verifyUrl");
+
+  if (!Number.isFinite(payload.year) || payload.year < 1900) {
+    invalidFields.push(`year (${String(payload.year)})`);
+  }
+
+  return { missingFields, invalidFields };
+};
+
 const defaultSiteSettings = {
   siteTitle: "minhduc.dev",
   tagline: "Back-end Developer & Automation",
@@ -455,6 +485,78 @@ router.delete("/repos/:id", async (req, res) => {
     return sendOk(res, null, "Repo deleted");
   } catch (error: any) {
     return sendError(res, error?.message || "Failed to delete repo", 400);
+  }
+});
+
+// Certificates
+router.get("/certificates", async (_req, res) => {
+  const certificates = await prisma.certificate.findMany({
+    orderBy: [{ featured: "desc" }, { year: "desc" }, { createdAt: "desc" }],
+  });
+  return sendOk(res, certificates);
+});
+
+router.get("/certificates/:id", async (req, res) => {
+  const certificate = await prisma.certificate.findUnique({ where: { id: req.params.id } });
+  if (!certificate) return sendError(res, "Not found", 404);
+  return sendOk(res, certificate);
+});
+
+router.post("/certificates", async (req, res) => {
+  const payload = parseCertificateInput(req.body);
+  const { missingFields, invalidFields } = validateCertificateInput(payload);
+
+  if (missingFields.length > 0 || invalidFields.length > 0) {
+    const issues: string[] = [];
+    if (missingFields.length > 0) {
+      issues.push(`Missing required fields: ${missingFields.join(", ")}`);
+    }
+    if (invalidFields.length > 0) {
+      issues.push(`Invalid fields: ${invalidFields.join(", ")} (must be >= 1900)`);
+    }
+    return sendError(res, issues.join(". "), 400);
+  }
+
+  try {
+    const created = await prisma.certificate.create({ data: payload });
+    return sendOk(res, created, "Certificate created");
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to create certificate", 400);
+  }
+});
+
+router.put("/certificates/:id", async (req, res) => {
+  const payload = parseCertificateInput(req.body);
+  const { missingFields, invalidFields } = validateCertificateInput(payload);
+
+  if (missingFields.length > 0 || invalidFields.length > 0) {
+    const issues: string[] = [];
+    if (missingFields.length > 0) {
+      issues.push(`Missing required fields: ${missingFields.join(", ")}`);
+    }
+    if (invalidFields.length > 0) {
+      issues.push(`Invalid fields: ${invalidFields.join(", ")} (must be >= 1900)`);
+    }
+    return sendError(res, issues.join(". "), 400);
+  }
+
+  try {
+    const updated = await prisma.certificate.update({
+      where: { id: req.params.id },
+      data: { ...payload, updatedAt: new Date() },
+    });
+    return sendOk(res, updated, "Certificate updated");
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to update certificate", 400);
+  }
+});
+
+router.delete("/certificates/:id", async (req, res) => {
+  try {
+    await prisma.certificate.delete({ where: { id: req.params.id } });
+    return sendOk(res, null, "Certificate deleted");
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to delete certificate", 400);
   }
 });
 

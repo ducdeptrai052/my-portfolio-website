@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Clock, Share2, X, Copy, Linkedin, Facebook, Twitte
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BlogCard } from "@/components/BlogCard";
+import { CallToActionSection } from "@/components/CallToActionSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ const extractHeadingsFromMarkdown = (markdown: string): TocItem[] => {
 const extractHeadingsFromDoc = (doc: JSONContent | null): TocItem[] => {
   const items: TocItem[] = [];
   const counts = new Map<string, number>();
-  const walk = (node: JSONContent | undefined) => {
+  const walk = (node: JSONContent | null | undefined) => {
     if (!node) return;
     if (node.type === "heading" && (node.attrs?.level === 2 || node.attrs?.level === 3)) {
       const text = (node.content ?? [])
@@ -629,41 +630,7 @@ export default function BlogDetailPage() {
                     )}
                   </div>
                 </article>
-                <div className="mx-auto mt-12 w-full max-w-3xl px-4 lg:px-0">
-                  <div className="cta-glass px-6 py-6">
-                    <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="max-w-xl">
-                        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground dark:text-white/70">
-                          Let's build something
-                        </p>
-                        <h3 className="mt-2 text-2xl font-serif text-foreground dark:text-white">
-                          I design and build reliable systems & APIs.
-                        </h3>
-                        <p className="mt-2 text-sm text-muted-foreground dark:text-white/70">
-                          Want to collaborate or learn more about my work? Get in touch or download my resume.
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-3">
-                        <Button
-                          variant="hero"
-                          size="lg"
-                          asChild
-                          className="liquid-glass-hover shadow-lg shadow-accent/30 dark:shadow-primary/25 hover:text-foreground dark:hover:text-white"
-                        >
-                          <Link to="/contact">Contact</Link>
-                        </Button>
-                        <Button
-                          variant="hero-outline"
-                          size="lg"
-                          asChild
-                          className="liquid-glass-hover shadow-lg shadow-primary/20 dark:shadow-primary/25 hover:text-foreground dark:hover:text-white"
-                        >
-                          <Link to="/resume">View Resume</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <CallToActionSection />
               </>
             )}
           </div>

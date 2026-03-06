@@ -8,8 +8,10 @@ import { SearchBar } from "@/components/SearchBar";
 import { TagFilterChips } from "@/components/TagFilterChips";
 import { PaginationBar } from "@/components/PaginationBar";
 import { EmptyState } from "@/components/EmptyState";
+import { CallToActionSection } from "@/components/CallToActionSection";
 import { fetchProjectsPublic, getAllTags, type Project } from "@/data/projects";
 import { fetchReposPublic, type Repo } from "@/data/repos";
+import { recruiterCtaPreset } from "@/data/recruiterCta";
 import { setPageMeta } from "@/lib/seo";
 
 const ITEMS_PER_PAGE = 6;
@@ -129,6 +131,8 @@ export default function ProjectsPage() {
               <p className="text-sm text-destructive mt-3">{reposError}</p>
             )}
           </div>
+
+          <CallToActionSection {...recruiterCtaPreset} className="mt-16 px-0" />
         </div>
       </main>
       <Footer />

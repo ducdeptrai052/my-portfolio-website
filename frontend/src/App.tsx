@@ -12,6 +12,7 @@ const BlogPage = lazy(() => import("@/pages/BlogPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
 const ResumePage = lazy(() => import("@/pages/ResumePage"));
+const CertificationsPage = lazy(() => import("@/pages/CertificationsPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage"));
@@ -23,6 +24,7 @@ const AdminProjectEditorPage = lazy(() => import("@/pages/admin/AdminProjectEdit
 const AdminBlogPage = lazy(() => import("@/pages/admin/AdminBlogPage"));
 const AdminBlogEditorPage = lazy(() => import("@/pages/admin/AdminBlogEditorPage"));
 const AdminReposPage = lazy(() => import("@/pages/admin/AdminReposPage"));
+const AdminCertificatesPage = lazy(() => import("@/pages/admin/AdminCertificatesPage"));
 const AdminMessagesPage = lazy(() => import("@/pages/admin/AdminMessagesPage"));
 
 function ScrollToTop() {
@@ -55,6 +57,7 @@ function App() {
           <Route path="/blog/:slug" element={<BlogDetailPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/resume" element={<ResumePage />} />
+          <Route path="/certifications" element={<CertificationsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route
@@ -73,6 +76,7 @@ function App() {
             <Route path="projects/new" element={<AdminProjectEditorPage />} />
             <Route path="projects/:id/edit" element={<AdminProjectEditorPage />} />
             <Route path="repos" element={<AdminReposPage />} />
+            <Route path="certificates" element={<AdminCertificatesPage />} />
             <Route path="blog" element={<AdminBlogPage />} />
             <Route path="blog/new" element={<AdminBlogEditorPage />} />
             <Route path="blog/:id/edit" element={<AdminBlogEditorPage />} />

@@ -1,11 +1,13 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { CallToActionSection } from "@/components/CallToActionSection";
 import { SectionHeader } from "@/components/SectionHeader";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
 import { fetchSkillsData, defaultSkillsData, SkillsData } from "@/data/skills";
 import { fetchAboutData, defaultAboutData, AboutData } from "@/data/about";
+import { recruiterCtaPreset } from "@/data/recruiterCta";
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { setPageMeta } from "@/lib/seo";
@@ -166,6 +168,8 @@ export default function AboutPage() {
               ))}
             </div>
           </section>
+
+          <CallToActionSection {...recruiterCtaPreset} className="mt-16 px-0" />
         </div>
       </main>
       <Footer />

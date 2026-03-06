@@ -83,6 +83,17 @@ router.get("/repos", async (_req, res) => {
   }
 });
 
+router.get("/certificates", async (_req, res) => {
+  try {
+    const certificates = await prisma.certificate.findMany({
+      orderBy: [{ featured: "desc" }, { year: "desc" }, { createdAt: "desc" }],
+    });
+    return sendOk(res, certificates);
+  } catch (error: any) {
+    return sendError(res, error?.message || "Failed to fetch certificates", 500);
+  }
+});
+
 router.post("/contact", async (req, res) => {
   const {
     name,
