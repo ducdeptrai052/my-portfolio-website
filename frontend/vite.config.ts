@@ -31,18 +31,9 @@ export default defineConfig(({ mode }) => ({
           ) {
             return "vendor-highlight";
           }
-          // Markdown rendering — blog detail only
-          if (
-            id.includes("react-markdown") ||
-            id.includes("remark-gfm") ||
-            id.includes("rehype-") ||
-            id.includes("unified") ||
-            id.includes("mdast") ||
-            id.includes("hast") ||
-            id.includes("micromark")
-          ) {
-            return "vendor-markdown";
-          }
+          // Markdown rendering — let Vite handle chunking naturally
+          // to avoid circular-dependency initialization errors
+          // (react-markdown, unified, remark, rehype, mdast, hast, micromark)
           // Charts — admin dashboard only
           if (id.includes("recharts") || id.includes("d3-")) {
             return "vendor-charts";
