@@ -19,13 +19,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          // Tiptap editor — admin only, no external deps
+          // Tiptap editor — admin only, safe to isolate
           if (id.includes("@tiptap") || id.includes("prosemirror")) {
             return "vendor-editor";
-          }
-          // Core React — safe to isolate
-          if (id.includes("react-dom")) {
-            return "vendor-react";
           }
         },
       },
