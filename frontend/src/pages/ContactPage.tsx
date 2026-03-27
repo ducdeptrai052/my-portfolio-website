@@ -26,6 +26,20 @@ export default function ContactPage() {
     setPageMeta({
       title: "Contact | Minh Duc",
       description: "Get in touch for projects, consulting, or collaboration.",
+      canonical: "https://www.hominhduc.cloud/contact",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        name: "Contact",
+        url: "https://www.hominhduc.cloud/contact",
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "Contact", item: "https://www.hominhduc.cloud/contact" },
+          ],
+        },
+      },
     });
   }, []);
 

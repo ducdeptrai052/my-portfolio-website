@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { loadPosts, type Post } from "@/data/posts";
 import { cn } from "@/lib/utils";
+import { setPageMeta, upsertJsonLd } from "@/lib/seo";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
@@ -105,40 +106,6 @@ const addIdsToHtml = (html: string, toc: TocItem[]) => {
   return doc.body.innerHTML;
 };
 
-const upsertMetaTag = (name: string, attr: "name" | "property", content: string) => {
-  if (!content || typeof document === "undefined") return;
-  let tag = document.querySelector(`meta[${attr}="${name}"]`) as HTMLMetaElement | null;
-  if (!tag) {
-    tag = document.createElement("meta");
-    tag.setAttribute(attr, name);
-    document.head.appendChild(tag);
-  }
-  tag.setAttribute("content", content);
-};
-
-const upsertLinkTag = (rel: string, href: string) => {
-  if (!href || typeof document === "undefined") return;
-  let tag = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
-  if (!tag) {
-    tag = document.createElement("link");
-    tag.setAttribute("rel", rel);
-    document.head.appendChild(tag);
-  }
-  tag.setAttribute("href", href);
-};
-
-const upsertJsonLd = (data: Record<string, unknown>) => {
-  if (typeof document === "undefined") return;
-  const id = "blog-jsonld";
-  let script = document.getElementById(id) as HTMLScriptElement | null;
-  if (!script) {
-    script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.id = id;
-    document.head.appendChild(script);
-  }
-  script.textContent = JSON.stringify(data);
-};
 
 export default function BlogDetailPage() {
   const { slug } = useParams();
@@ -301,27 +268,19 @@ export default function BlogDetailPage() {
     if (!post) return;
     const title = post.title || "Blog Post";
     const description = post.excerpt || "Read the latest blog post.";
-    const url = typeof window !== "undefined" ? window.location.href : "";
-    const image = post.coverImage || "";
+    const url = `https://www.hominhduc.cloud/blog/${post.slug}`;
+    const image = post.coverImage || undefined;
     const isoDate = post.date ? new Date(post.date).toISOString() : new Date().toISOString();
 
-    document.title = `${title} | minhduc.dev`;
-    upsertMetaTag("description", "name", description);
-    upsertMetaTag("og:title", "property", title);
-    upsertMetaTag("og:description", "property", description);
-    upsertMetaTag("og:type", "property", "article");
-    upsertMetaTag("og:url", "property", url);
-    if (image) {
-      upsertMetaTag("og:image", "property", image);
-    }
-    upsertMetaTag("twitter:card", "name", image ? "summary_large_image" : "summary");
-    upsertMetaTag("twitter:title", "name", title);
-    upsertMetaTag("twitter:description", "name", description);
-    if (image) {
-      upsertMetaTag("twitter:image", "name", image);
-    }
-    upsertLinkTag("canonical", url);
-    upsertJsonLd({
+    setPageMeta({
+      title: `${title} | minhduc.dev`,
+      description,
+      canonical: url,
+      ogImage: image,
+      ogType: "article",
+    });
+
+    upsertJsonLd("blog-jsonld", {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
       headline: title,
@@ -332,10 +291,24 @@ export default function BlogDetailPage() {
       author: {
         "@type": "Person",
         name: "Minh Duc",
+        url: "https://www.hominhduc.cloud/",
+      },
+      publisher: {
+        "@type": "Person",
+        name: "Minh Duc",
+        url: "https://www.hominhduc.cloud/",
       },
       mainEntityOfPage: {
         "@type": "WebPage",
         "@id": url,
+      },
+      breadcrumb: {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+          { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.hominhduc.cloud/blog" },
+          { "@type": "ListItem", position: 3, name: title, item: url },
+        ],
       },
     });
   }, [post]);

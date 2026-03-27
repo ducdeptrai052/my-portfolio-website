@@ -71,6 +71,20 @@ export default function ProjectsPage() {
     setPageMeta({
       title: "Projects | Minh Duc",
       description: "A collection of projects and open source contributions.",
+      canonical: "https://www.hominhduc.cloud/projects",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Projects",
+        url: "https://www.hominhduc.cloud/projects",
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "Projects", item: "https://www.hominhduc.cloud/projects" },
+          ],
+        },
+      },
     });
   }, []);
 

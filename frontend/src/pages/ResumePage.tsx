@@ -22,6 +22,20 @@ export default function ResumePage() {
     setPageMeta({
       title: "Resume | Minh Duc",
       description: "Download or preview my latest resume.",
+      canonical: "https://www.hominhduc.cloud/resume",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        name: "Resume",
+        url: "https://www.hominhduc.cloud/resume",
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "Resume", item: "https://www.hominhduc.cloud/resume" },
+          ],
+        },
+      },
     });
   }, []);
 

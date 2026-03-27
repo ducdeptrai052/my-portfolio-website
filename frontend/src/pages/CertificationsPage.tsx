@@ -157,6 +157,20 @@ export default function CertificationsPage() {
     setPageMeta({
       title: "Certifications | Minh Duc",
       description: "Professional certifications from industry-leading platforms and organizations.",
+      canonical: "https://www.hominhduc.cloud/certifications",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Certifications",
+        url: "https://www.hominhduc.cloud/certifications",
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "Certifications", item: "https://www.hominhduc.cloud/certifications" },
+          ],
+        },
+      },
     });
   }, []);
 

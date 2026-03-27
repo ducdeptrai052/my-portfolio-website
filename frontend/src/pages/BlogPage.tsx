@@ -34,6 +34,20 @@ export default function BlogPage() {
     setPageMeta({
       title: "Blog | Minh Duc",
       description: "Latest posts on development, design, and personal growth.",
+      canonical: "https://www.hominhduc.cloud/blog",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        name: "Minh Duc Blog",
+        url: "https://www.hominhduc.cloud/blog",
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.hominhduc.cloud/blog" },
+          ],
+        },
+      },
     });
   }, []);
 

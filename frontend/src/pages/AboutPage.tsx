@@ -116,6 +116,26 @@ export default function AboutPage() {
     setPageMeta({
       title: `About | ${titleBase}`,
       description,
+      canonical: "https://www.hominhduc.cloud/about",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        name: `About ${titleBase}`,
+        url: "https://www.hominhduc.cloud/about",
+        mainEntity: {
+          "@type": "Person",
+          name: titleBase,
+          jobTitle: "Backend Developer",
+          url: "https://www.hominhduc.cloud/",
+        },
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: "https://www.hominhduc.cloud/" },
+            { "@type": "ListItem", position: 2, name: "About", item: "https://www.hominhduc.cloud/about" },
+          ],
+        },
+      },
     });
   }, [about.shortBio, settings.siteTitle, settings.tagline]);
 

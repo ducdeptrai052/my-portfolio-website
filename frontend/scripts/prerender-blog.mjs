@@ -73,6 +73,12 @@ const buildJsonLd = ({ title, description, url, image, date }) => ({
   author: {
     "@type": "Person",
     name: "Minh Duc",
+    url: siteUrl,
+  },
+  publisher: {
+    "@type": "Person",
+    name: "Minh Duc",
+    url: siteUrl,
   },
   mainEntityOfPage: {
     "@type": "WebPage",
@@ -88,31 +94,38 @@ const injectHead = (html, meta) => {
     .replace(/<meta name="twitter:[^"]+" content=".*?"\s*\/?>/gi, "")
     .replace(/<link rel="canonical" href=".*?"\s*\/?>/gi, "");
 
+  const image = meta.image || defaultOgImage;
+  const ogType = meta.ogType || "article";
+
   const ogTags = [
     `<meta property="og:title" content="${escapeHtml(meta.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(meta.description)}" />`,
-    `<meta property="og:type" content="article" />`,
+    `<meta property="og:type" content="${ogType}" />`,
     `<meta property="og:url" content="${escapeHtml(meta.url)}" />`,
+    `<meta property="og:site_name" content="Minh Duc" />`,
+    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:image" content="${escapeHtml(image)}" />`,
   ];
-  if (meta.image) {
-    ogTags.push(`<meta property="og:image" content="${escapeHtml(meta.image)}" />`);
-  }
 
   const twitterTags = [
     `<meta name="twitter:card" content="${meta.image ? "summary_large_image" : "summary"}" />`,
     `<meta name="twitter:title" content="${escapeHtml(meta.title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(meta.description)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
   ];
-  if (meta.image) {
-    twitterTags.push(`<meta name="twitter:image" content="${escapeHtml(meta.image)}" />`);
-  }
 
+  const authorTag = `<meta name="author" content="Minh Duc" />`;
   const canonical = `<link rel="canonical" href="${escapeHtml(meta.url)}" />`;
-  const jsonLd = `<script type="application/ld+json">${JSON.stringify(meta.jsonLd)}</script>`;
+
+  // Merge breadcrumb into JSON-LD if provided
+  const jsonLdData = meta.breadcrumb
+    ? { ...meta.jsonLd, breadcrumb: meta.breadcrumb }
+    : meta.jsonLd;
+  const jsonLd = `<script type="application/ld+json">${JSON.stringify(jsonLdData)}</script>`;
 
   return cleaned.replace(
     "</head>",
-    `${canonical}\n${ogTags.join("\n")}\n${twitterTags.join("\n")}\n${jsonLd}\n</head>`
+    `${authorTag}\n${canonical}\n${ogTags.join("\n")}\n${twitterTags.join("\n")}\n${jsonLd}\n</head>`
   );
 };
 
@@ -236,17 +249,32 @@ const run = async () => {
     </main>
   `;
 
+  const buildBreadcrumb = (...items) => ({
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  });
+
   const blogMeta = {
     title: "Blog | Minh Duc",
     description: "Latest posts from Minh Duc.",
     url: `${siteUrl}/blog`,
     image: defaultOgImage,
+    ogType: "website",
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "Blog",
       name: "Minh Duc Blog",
       url: `${siteUrl}/blog`,
     },
+    breadcrumb: buildBreadcrumb(
+      { name: "Home", url: `${siteUrl}/` },
+      { name: "Blog", url: `${siteUrl}/blog` }
+    ),
   };
 
   await writePage("/blog", blogMeta, blogListHtml, indexHtml);
@@ -267,11 +295,17 @@ const run = async () => {
       description: heroIntro || siteTagline || "Personal portfolio and blog.",
       url: `${siteUrl}/`,
       image: defaultOgImage,
+      ogType: "website",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "Person",
         name: siteTitle,
         url: `${siteUrl}/`,
+        jobTitle: "Backend Developer",
+        sameAs: [
+          "https://github.com/ducdeptrai052",
+          "https://www.linkedin.com/in/duc-ho-073aa8153/",
+        ],
       },
     },
     homeBody,
@@ -300,12 +334,17 @@ const run = async () => {
       description: "A collection of projects and open source contributions.",
       url: `${siteUrl}/projects`,
       image: defaultOgImage,
+      ogType: "website",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "CollectionPage",
         name: "Projects",
         url: `${siteUrl}/projects`,
       },
+      breadcrumb: buildBreadcrumb(
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "Projects", url: `${siteUrl}/projects` }
+      ),
     },
     projectsBody,
     indexHtml
@@ -327,12 +366,23 @@ const run = async () => {
       description: about.shortBio || siteTagline || "Learn more about Minh Duc.",
       url: `${siteUrl}/about`,
       image: defaultOgImage,
+      ogType: "profile",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "ProfilePage",
-        name: "About",
+        name: `About ${siteTitle}`,
         url: `${siteUrl}/about`,
+        mainEntity: {
+          "@type": "Person",
+          name: siteTitle,
+          jobTitle: "Backend Developer",
+          url: `${siteUrl}/`,
+        },
       },
+      breadcrumb: buildBreadcrumb(
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "About", url: `${siteUrl}/about` }
+      ),
     },
     aboutBody,
     indexHtml
@@ -353,12 +403,17 @@ const run = async () => {
       description: "Download or preview my latest resume.",
       url: `${siteUrl}/resume`,
       image: defaultOgImage,
+      ogType: "website",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "WebPage",
         name: "Resume",
         url: `${siteUrl}/resume`,
       },
+      breadcrumb: buildBreadcrumb(
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "Resume", url: `${siteUrl}/resume` }
+      ),
     },
     resumeBody,
     indexHtml
@@ -379,12 +434,17 @@ const run = async () => {
       description: "Get in touch for projects, consulting, or collaboration.",
       url: `${siteUrl}/contact`,
       image: defaultOgImage,
+      ogType: "website",
       jsonLd: {
         "@context": "https://schema.org",
         "@type": "ContactPage",
         name: "Contact",
         url: `${siteUrl}/contact`,
       },
+      breadcrumb: buildBreadcrumb(
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "Contact", url: `${siteUrl}/contact` }
+      ),
     },
     contactBody,
     indexHtml
@@ -418,7 +478,13 @@ const run = async () => {
       description,
       url,
       image,
+      ogType: "article",
       jsonLd: buildJsonLd({ title, description, url, image, date }),
+      breadcrumb: buildBreadcrumb(
+        { name: "Home", url: `${siteUrl}/` },
+        { name: "Blog", url: `${siteUrl}/blog` },
+        { name: title, url }
+      ),
     };
 
     const html = injectRoot(injectHead(indexHtml, meta), articleHtml);
@@ -427,7 +493,7 @@ const run = async () => {
     await fs.writeFile(path.join(postDir, "index.html"), html, "utf-8");
   }
 
-  const staticRoutes = ["/", "/projects", "/about", "/resume", "/contact", "/blog"];
+  const staticRoutes = ["/", "/projects", "/about", "/resume", "/contact", "/blog", "/certifications"];
   const urls = [
     ...staticRoutes.map((route) => ({ loc: `${siteUrl}${route}`, lastmod: new Date().toISOString() })),
     ...posts.map((post) => ({

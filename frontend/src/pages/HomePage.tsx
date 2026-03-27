@@ -131,6 +131,18 @@ export default function HomePage() {
     setPageMeta({
       title: `${titleBase} | Developer Portfolio`,
       description,
+      canonical: "https://www.hominhduc.cloud/",
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: titleBase,
+        url: "https://www.hominhduc.cloud/",
+        jobTitle: "Backend Developer",
+        sameAs: [
+          "https://github.com/ducdeptrai052",
+          "https://www.linkedin.com/in/duc-ho-073aa8153/",
+        ],
+      },
     });
   }, [settings.heroIntro, settings.siteTitle, settings.tagline]);
 
