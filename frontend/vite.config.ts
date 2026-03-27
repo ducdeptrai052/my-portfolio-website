@@ -24,24 +24,8 @@ export default defineConfig(({ mode }) => ({
             return "vendor-editor";
           }
           // Syntax highlighting — blog detail + admin editor only
-          if (
-            id.includes("highlight.js") ||
-            id.includes("lowlight") ||
-            id.includes("rehype-highlight")
-          ) {
+          if (id.includes("highlight.js") || id.includes("lowlight")) {
             return "vendor-highlight";
-          }
-          // Markdown rendering — blog detail only
-          if (
-            id.includes("react-markdown") ||
-            id.includes("remark-gfm") ||
-            id.includes("rehype-") ||
-            id.includes("unified") ||
-            id.includes("mdast") ||
-            id.includes("hast") ||
-            id.includes("micromark")
-          ) {
-            return "vendor-markdown";
           }
           // Charts — admin dashboard only
           if (id.includes("recharts") || id.includes("d3-")) {
