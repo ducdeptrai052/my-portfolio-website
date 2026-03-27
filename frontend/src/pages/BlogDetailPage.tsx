@@ -1,3 +1,4 @@
+import "@/styles/highlight-theme.css";
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Calendar, Clock, Share2, X, Copy, Linkedin, Facebook, Twitter, MessageCircle } from "lucide-react";

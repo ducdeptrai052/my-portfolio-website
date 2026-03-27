@@ -1,3 +1,4 @@
+import "@/styles/highlight-theme.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import {

@@ -15,7 +15,7 @@ import { getTopRepos, type Repo } from "@/data/repos";
 import { fetchCertificatesPublic, type Certificate } from "@/data/certificates";
 import { recruiterCtaPreset } from "@/data/recruiterCta";
 import { useEffect, useState } from "react";
-import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
+import { useSiteSettings } from "@/lib/SiteSettingsContext";
 import { setPageMeta } from "@/lib/seo";
 import { getPlatformLogoClass, getPlatformMonogram } from "@/lib/certificateBrand";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -106,8 +106,7 @@ function CertificationCard({ cert }: { cert: Certificate }) {
 }
 
 export default function HomePage() {
-  const [settings, setSettings] = useState(defaultSiteSettings);
-  const [settingsLoading, setSettingsLoading] = useState(true);
+  const { settings, loading: settingsLoading } = useSiteSettings();
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [posts, setPosts] = useState<Post[]>([]);
@@ -120,13 +119,6 @@ export default function HomePage() {
   const [certifications, setCertifications] = useState<Certificate[]>([]);
   const [certificationsLoading, setCertificationsLoading] = useState(true);
   const [certificationsError, setCertificationsError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchSiteSettings(true)
-      .then((data) => setSettings({ ...defaultSiteSettings, ...data }))
-      .catch(() => setSettings(defaultSiteSettings))
-      .finally(() => setSettingsLoading(false));
-  }, []);
 
   const scrollToCertifications = () => {
     if (typeof document === "undefined") return;
@@ -144,81 +136,35 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchProjectsPublic()
-      .then((data) => {
-        setProjects(data);
-        setProjectsError(null);
-      })
+      .then((data) => { setProjects(data); setProjectsError(null); })
       .catch((err: Error) => setProjectsError(err?.message || "Failed to load projects"))
       .finally(() => setProjectsLoading(false));
-  }, []);
 
-  useEffect(() => {
-    const schedule = (fn: () => void) => {
-      if (typeof window === "undefined") return fn();
-      if ("requestIdleCallback" in window) {
-        (window as typeof window & { requestIdleCallback?: IdleRequestCallback }).requestIdleCallback(
-          () => fn(),
-          { timeout: 1200 }
-        );
-      } else {
-        setTimeout(fn, 200);
-      }
-    };
+    loadPosts()
+      .then((data) => { setPosts(data); setPostsError(null); })
+      .catch((err: Error) => setPostsError(err?.message || "Failed to load posts"))
+      .finally(() => setPostsLoading(false));
 
-    schedule(() => {
-      loadPosts()
-        .then((data) => {
-          setPosts(data);
-          setPostsError(null);
-        })
-        .catch((err: Error) => setPostsError(err?.message || "Failed to load posts"))
-        .finally(() => setPostsLoading(false));
-    });
+    fetchCertificatesPublic()
+      .then((data) => { setCertifications(data); setCertificationsError(null); })
+      .catch((err: Error) => setCertificationsError(err?.message || "Failed to load certifications"))
+      .finally(() => setCertificationsLoading(false));
   }, []);
 
   useEffect(() => {
     if (settingsLoading) return;
     if (!settings.showOpenSource) {
       setRepos([]);
-      setReposError(null);
       setReposLoading(false);
       return;
     }
 
     setReposLoading(true);
-
-    const schedule = (fn: () => void) => {
-      if (typeof window === "undefined") return fn();
-      if ("requestIdleCallback" in window) {
-        (window as typeof window & { requestIdleCallback?: IdleRequestCallback }).requestIdleCallback(
-          () => fn(),
-          { timeout: 1600 }
-        );
-      } else {
-        setTimeout(fn, 250);
-      }
-    };
-
-    schedule(() => {
-      getTopRepos(4)
-        .then((data) => {
-          setRepos(data);
-          setReposError(null);
-        })
-        .catch((err: Error) => setReposError(err?.message || "Failed to load repositories"))
-        .finally(() => setReposLoading(false));
-    });
+    getTopRepos(4)
+      .then((data) => { setRepos(data); setReposError(null); })
+      .catch((err: Error) => setReposError(err?.message || "Failed to load repositories"))
+      .finally(() => setReposLoading(false));
   }, [settings.showOpenSource, settingsLoading]);
-
-  useEffect(() => {
-    fetchCertificatesPublic()
-      .then((data) => {
-        setCertifications(data);
-        setCertificationsError(null);
-      })
-      .catch((err: Error) => setCertificationsError(err?.message || "Failed to load certifications"))
-      .finally(() => setCertificationsLoading(false));
-  }, []);
 
   const featuredProjects = getFeaturedProjects(projects).slice(0, 3);
   const latestPosts = posts.slice(0, 3);

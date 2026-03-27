@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
+import { useSiteSettings } from "@/lib/SiteSettingsContext";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -18,14 +18,21 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [siteTitle, setSiteTitle] = useState(defaultSiteSettings.siteTitle);
+  const { settings } = useSiteSettings();
   const location = useLocation();
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -38,12 +45,6 @@ export function Navbar() {
     }
     const isDarkMode = document.documentElement.classList.contains("dark");
     setIsDark(isDarkMode);
-  }, []);
-
-  useEffect(() => {
-    fetchSiteSettings(true).then((settings) => {
-      setSiteTitle(settings.siteTitle || defaultSiteSettings.siteTitle);
-    });
   }, []);
 
   const toggleTheme = () => {
@@ -74,7 +75,7 @@ export function Navbar() {
             to="/"
             className="font-serif text-xl font-semibold tracking-tight hover:text-accent transition-colors dark:text-white"
           >
-            {siteTitle}
+            {settings.siteTitle}
           </Link>
 
           {/* Desktop Navigation */}

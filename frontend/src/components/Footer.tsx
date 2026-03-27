@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import { Github, Twitter, Linkedin, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { fetchSiteSettings, defaultSiteSettings } from "@/data/siteSettings";
+import { useSiteSettings } from "@/lib/SiteSettingsContext";
 
 const footerLinks = [
   { href: "/projects", label: "Projects" },
@@ -14,15 +13,7 @@ const footerLinks = [
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const [settings, setSettings] = useState(defaultSiteSettings);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
-
-  useEffect(() => {
-    fetchSiteSettings(true)
-      .then((data) => setSettings({ ...defaultSiteSettings, ...data }))
-      .catch(() => setSettings(defaultSiteSettings))
-      .finally(() => setSettingsLoaded(true));
-  }, []);
+  const { settings, loading } = useSiteSettings();
 
   const socialLinks = [
     { icon: Github, href: settings.socialLinks.github, label: "GitHub" },
@@ -41,10 +32,10 @@ export function Footer() {
               to="/"
               className="font-serif text-2xl font-semibold tracking-tight"
             >
-              {settingsLoaded ? settings.siteTitle : defaultSiteSettings.siteTitle}
+              {settings.siteTitle}
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs">
-              {settingsLoaded ? settings.tagline : defaultSiteSettings.tagline}
+              {settings.tagline}
             </p>
           </div>
 

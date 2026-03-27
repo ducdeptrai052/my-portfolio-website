@@ -5,6 +5,7 @@ import { AuthGuard } from "@/components/admin/AuthGuard";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Analytics } from "@vercel/analytics/react";
 import { ScrollToTopButton } from "@/components/ScrollToTopButton";
+import { SiteSettingsProvider } from "@/lib/SiteSettingsContext";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ProjectsPage = lazy(() => import("@/pages/ProjectsPage"));
@@ -53,6 +54,7 @@ function App() {
         v7_relativeSplatPath: true,
       }}
     >
+      <SiteSettingsProvider>
       <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
@@ -93,6 +95,7 @@ function App() {
       <ScrollToTopButton />
       <Toaster />
       <Analytics />
+      </SiteSettingsProvider>
     </BrowserRouter>
   );
 }
