@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { Resvg } from "@resvg/resvg-js";
 import { generateHTML } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -22,7 +23,7 @@ const siteUrl = normalizeUrl(
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:8080")
 );
 const apiBase = normalizeUrl(process.env.VITE_API_URL || process.env.API_URL || "http://localhost:3000");
-const defaultOgImage = `${siteUrl}/og-image.svg`;
+const defaultOgImage = `${siteUrl}/og-image.png`;
 
 const escapeHtml = (value = "") =>
   String(value)
@@ -105,6 +106,9 @@ const injectHead = (html, meta) => {
     `<meta property="og:site_name" content="Minh Duc" />`,
     `<meta property="og:locale" content="en_US" />`,
     `<meta property="og:image" content="${escapeHtml(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:type" content="image/png" />`,
   ];
 
   const twitterTags = [
@@ -144,15 +148,18 @@ const toSlug = (value = "") =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "") || "post";
 
+const truncateText = (text, maxLen) =>
+  text.length > maxLen ? text.slice(0, maxLen - 1) + "…" : text;
+
 const buildOgSvg = ({
   title = "Blog",
   subtitle = "Minh Duc",
   description = "",
   accent = "#38bdf8",
 }) => {
-  const safeTitle = escapeHtml(title);
-  const safeSubtitle = escapeHtml(subtitle);
-  const safeDescription = escapeHtml(description);
+  const safeTitle = escapeHtml(truncateText(title, 60));
+  const safeSubtitle = escapeHtml(truncateText(subtitle, 80));
+  const safeDescription = escapeHtml(truncateText(description, 100));
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -164,18 +171,27 @@ const buildOgSvg = ({
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="70" y="70" width="1060" height="490" rx="32" fill="#0f172a" stroke="#1f2937" stroke-width="2"/>
   <rect x="70" y="70" width="16" height="490" rx="8" fill="${accent}"/>
-  <text x="130" y="240" fill="#e2e8f0" font-family="Playfair Display, serif" font-size="56" font-weight="600">
+  <text x="130" y="240" fill="#e2e8f0" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="700">
     ${safeTitle}
   </text>
-  <text x="130" y="320" fill="#94a3b8" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500">
+  <text x="130" y="320" fill="#94a3b8" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="500">
     ${safeSubtitle}
   </text>
   ${
     safeDescription
-      ? `<text x="130" y="400" fill="#64748b" font-family="Inter, Arial, sans-serif" font-size="22">${safeDescription}</text>`
+      ? `<text x="130" y="400" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="22">${safeDescription}</text>`
       : ""
   }
 </svg>`;
+};
+
+const svgToPng = (svgString) => {
+  const resvg = new Resvg(svgString, {
+    fitTo: { mode: "width", value: 1200 },
+    font: { loadSystemFonts: true },
+  });
+  const rendered = resvg.render();
+  return rendered.asPng();
 };
 
 const fetchPosts = async () => {
@@ -222,6 +238,16 @@ const writePage = async (route, meta, body, indexHtml) => {
 const run = async () => {
   const indexHtml = await fs.readFile(indexPath, "utf-8");
   await ensureDir(ogDir);
+
+  // Generate default og-image.png
+  const defaultSvg = buildOgSvg({
+    title: "Minh Duc",
+    subtitle: "Backend Developer",
+    description: "APIs • Systems • Automation",
+    accent: "#38bdf8",
+  });
+  await fs.writeFile(path.join(distDir, "og-image.png"), svgToPng(defaultSvg));
+
   const posts = await fetchPosts();
   const settings = (await fetchSettings()) || {};
   const about = (await fetchAbout()) || {};
@@ -454,11 +480,12 @@ const run = async () => {
     const title = post.title || "Blog Post";
     const description = post.excerpt || "Read the latest blog post.";
     const url = `${siteUrl}/blog/${post.slug}`;
-    const ogName = `blog-${toSlug(post.slug || title)}.svg`;
+    const ogName = `blog-${toSlug(post.slug || title)}.png`;
     const ogPath = path.join(ogDir, ogName);
     const ogPublicUrl = `${siteUrl}/og/${ogName}`;
     const ogSvg = buildOgSvg({ title, subtitle: siteTitle, description });
-    await fs.writeFile(ogPath, ogSvg, "utf-8");
+    const ogPng = svgToPng(ogSvg);
+    await fs.writeFile(ogPath, ogPng);
     const image = resolveImageUrl(post.coverImageUrl || post.coverImage || ogPublicUrl || defaultOgImage);
     const date = post.updatedAt || post.createdAt || new Date().toISOString();
     const contentHtml = renderContent(post.content);

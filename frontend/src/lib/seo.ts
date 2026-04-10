@@ -15,7 +15,7 @@ type PageMeta = {
 };
 
 const SITE_NAME = "Minh Duc";
-const DEFAULT_OG_IMAGE = "https://www.hominhduc.cloud/og-image.svg";
+const DEFAULT_OG_IMAGE = "https://www.hominhduc.cloud/og-image.png";
 
 export const upsertMetaTag = ({ name, attr, content }: MetaTag) => {
   if (!content || typeof document === "undefined") return;
@@ -74,6 +74,9 @@ export const setPageMeta = ({ title, description, canonical, ogImage, ogType, au
   upsertMetaTag({ name: "og:site_name", attr: "property", content: SITE_NAME });
   upsertMetaTag({ name: "og:locale", attr: "property", content: "en_US" });
   upsertMetaTag({ name: "og:image", attr: "property", content: image });
+  upsertMetaTag({ name: "og:image:width", attr: "property", content: "1200" });
+  upsertMetaTag({ name: "og:image:height", attr: "property", content: "630" });
+  upsertMetaTag({ name: "og:image:type", attr: "property", content: "image/png" });
 
   // Twitter Card
   upsertMetaTag({ name: "twitter:card", attr: "name", content: ogImage ? "summary_large_image" : "summary" });
